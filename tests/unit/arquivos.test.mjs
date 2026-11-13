@@ -8,13 +8,13 @@ const raiz = resolve(import.meta.dirname, '../..');
 const ler = (f) => readFileSync(resolve(raiz, f), 'utf8');
 const existe = (f) => existsSync(resolve(raiz, f));
 
-test('ícones do manifest existem', { todo: 'S0.2 · C1: pasta icons/ não foi enviada' }, () => {
+test('ícones do manifest existem', () => {
   const manifest = JSON.parse(ler('manifest.webmanifest'));
   const faltando = manifest.icons.map((i) => i.src).filter((s) => !existe(s));
   assert.deepEqual(faltando, []);
 });
 
-test('arquivos essenciais do service worker existem', { todo: 'S0.2 · C1' }, () => {
+test('arquivos essenciais do service worker existem', () => {
   const sw = ler('sw.js');
   const bloco = sw.match(/ESSENCIAIS\s*=\s*\[([\s\S]*?)\]/)[1];
   const arquivos = [...bloco.matchAll(/'\.\/([^']*)'/g)].map((m) => m[1]).filter(Boolean);
@@ -22,9 +22,24 @@ test('arquivos essenciais do service worker existem', { todo: 'S0.2 · C1' }, ()
   assert.deepEqual(faltando, []);
 });
 
-test('ícones citados no index.html existem', { todo: 'S0.2 · C1' }, () => {
+test('ícones citados no index.html existem', () => {
   const html = ler('index.html');
   const refs = [...html.matchAll(/(?:href|src)="(icons\/[^"]+)"/g)].map((m) => m[1]);
   assert.ok(refs.length > 0);
   assert.deepEqual(refs.filter((r) => !existe(r)), []);
+});
+
+test('os ícones PNG têm o tamanho declarado no manifest', () => {
+  const manifest = JSON.parse(ler('manifest.webmanifest'));
+  for (const icone of manifest.icons) {
+    const png = readFileSync(resolve(raiz, icone.src));
+    assert.equal(png.subarray(1, 4).toString(), 'PNG', `${icone.src} não é PNG`);
+    const [w, h] = [png.readUInt32BE(16), png.readUInt32BE(20)];
+    assert.equal(`${w}x${h}`, icone.sizes, `${icone.src}: tamanho real ${w}x${h}`);
+  }
+});
+
+test('o ícone da tela inicial do iPhone tem 180x180', () => {
+  const png = readFileSync(resolve(raiz, 'icons/apple-touch-icon.png'));
+  assert.equal(`${png.readUInt32BE(16)}x${png.readUInt32BE(20)}`, '180x180');
 });
