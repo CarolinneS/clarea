@@ -43,3 +43,21 @@ test('o ícone da tela inicial do iPhone tem 180x180', () => {
   const png = readFileSync(resolve(raiz, 'icons/apple-touch-icon.png'));
   assert.equal(`${png.readUInt32BE(16)}x${png.readUInt32BE(20)}`, '180x180');
 });
+
+test('fontes citadas no index.html existem', () => {
+  const html = ler('index.html');
+  const refs = [...html.matchAll(/url\('(fonts\/[^']+)'\)/g)].map((m) => m[1]);
+  assert.ok(refs.length >= 2, 'esperava ao menos Regular e Bold');
+  assert.deepEqual(refs.filter((r) => !existe(r)), []);
+});
+
+test('arquivos opcionais do service worker existem (ícones e fontes)', () => {
+  const sw = ler('sw.js');
+  const bloco = sw.match(/OPCIONAIS\s*=\s*\[([\s\S]*?)\]/)[1];
+  const arquivos = [...bloco.matchAll(/'\.\/([^']*)'/g)].map((m) => m[1]).filter(Boolean);
+  assert.deepEqual(arquivos.filter((f) => !existe(f)), []);
+});
+
+test('a licença da fonte acompanha os arquivos', () => {
+  assert.ok(existe('fonts/OFL.txt'));
+});

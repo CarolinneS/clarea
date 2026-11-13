@@ -47,3 +47,18 @@ test('com 5.000 assuntos o app abre e captura em tempo razoável', async () => {
   assert.ok(capturaMs < 1000, `capturar levou ${Math.round(capturaMs)} ms`);
   await contexto.close();
 });
+
+test('a fonte do projeto (Atkinson Hyperlegible) é carregada e usada', async () => {
+  const { contexto, pagina } = await novaPagina(amb, estadoBase([assunto('A', { focus: true })]));
+  await pagina.goto(amb.url);
+  await pagina.waitForSelector('#nav:not([hidden])');
+  const r = await pagina.evaluate(async () => {
+    await document.fonts.ready;
+    const faces = [...document.fonts].filter((f) => f.family.includes('Atkinson')).map((f) => f.status);
+    return { faces, regular: document.fonts.check('16px "Atkinson Hyperlegible"'), negrito: document.fonts.check('700 16px "Atkinson Hyperlegible"') };
+  });
+  assert.ok(r.faces.length >= 2 && r.faces.every((s) => s === 'loaded'), `faces: ${JSON.stringify(r.faces)}`);
+  assert.equal(r.regular && r.negrito, true);
+  assert.deepEqual(pagina.requisicoesExternas, []);
+  await contexto.close();
+});

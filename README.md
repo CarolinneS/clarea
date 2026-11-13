@@ -1,4 +1,4 @@
-# Clarea · versão 1.0.1
+# Clarea · versão 1.0.2
 
 > Escreva como pensa. O Clarea organiza no fim do dia.
 
@@ -54,6 +54,10 @@ feat: MVP do Clarea como app instalável (Anotar, Clarear o dia, Hoje)
 1. Altere os arquivos.
 2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.2`). Um teste automático avisa se algum ficar diferente.
 3. Envie para o GitHub. Quem já tem o app instalado recebe a versão nova ao abrir o app (às vezes é preciso fechar e abrir de novo).
+
+## O que mudou na 1.0.2
+
+- A fonte Atkinson Hyperlegible, feita para leitura fácil, passa a fazer parte do app (a pasta `fonts/` não tinha sido enviada, e o app usava uma fonte padrão do celular). Licença livre (SIL OFL), em `fonts/OFL.txt`.
 
 ## O que mudou na 1.0.1 (estabilização)
 
