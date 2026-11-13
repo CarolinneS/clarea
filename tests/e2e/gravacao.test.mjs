@@ -7,9 +7,8 @@ let amb;
 before(async () => { amb = await abrirAmbiente(); });
 after(async () => { await amb.fechar(); });
 
-for (const [espera, todo] of [[50, 'S0.3 · C2'], [200, 'S0.3 · C2'], [600, false]]) {
-  const opcoes = todo ? { todo } : {};
-  test(`anotação confirmada sobrevive a recarregar após ${espera} ms`, opcoes, async () => {
+for (const espera of [50, 200, 600]) {
+  test(`anotação confirmada sobrevive a recarregar após ${espera} ms`, async () => {
     const { contexto, pagina } = await novaPagina(amb, estadoBase());
     await pagina.goto(amb.url + '?tela=anotar');
     await pagina.waitForSelector('#new-line');
@@ -22,7 +21,7 @@ for (const [espera, todo] of [[50, 'S0.3 · C2'], [200, 'S0.3 · C2'], [600, fal
   });
 }
 
-test('duas abas anotando não perdem anotações uma da outra', { todo: 'S0.3 · C3' }, async () => {
+test('duas abas anotando não perdem anotações uma da outra', async () => {
   const { contexto, pagina } = await novaPagina(amb, estadoBase());
   await pagina.goto(amb.url + '?tela=anotar');
   const outra = await contexto.newPage();
@@ -30,9 +29,9 @@ test('duas abas anotando não perdem anotações uma da outra', { todo: 'S0.3 ·
   await pagina.waitForSelector('#new-line');
   await outra.waitForSelector('#new-line');
   await anotar(pagina, 'Da aba 1');
-  await pagina.waitForTimeout(700);
+  await outra.waitForFunction(() => document.body.innerText.includes('Da aba 1'));
   await anotar(outra, 'Da aba 2');
-  await outra.waitForTimeout(700);
+  await pagina.waitForFunction(() => document.body.innerText.includes('Da aba 2'));
   const guardado = textos(await lerAssuntos(pagina));
   assert.ok(guardado.includes('Da aba 1') && guardado.includes('Da aba 2'), `guardado: ${JSON.stringify(guardado)}`);
   await contexto.close();
@@ -53,5 +52,47 @@ test('acentos, emoji, HTML, 3.000 caracteres e duplo Enter são guardados como d
   assert.equal(textos(itens).filter((t) => t === 'Duplo').length, 1, 'duplo Enter não pode duplicar');
   assert.ok(textos(itens).includes(especial), 'texto especial deve ficar intacto');
   assert.equal(await pagina.evaluate(() => !!document.querySelector('.lines b')), false, 'HTML digitado não pode ser interpretado');
+  await contexto.close();
+});
+
+test('aba que recebe mudança de outra não apaga o que está sendo digitado', async () => {
+  const { contexto, pagina } = await novaPagina(amb, estadoBase());
+  await pagina.goto(amb.url + '?tela=anotar');
+  const outra = await contexto.newPage();
+  await outra.goto(amb.url + '?tela=anotar');
+  await pagina.waitForSelector('#new-line');
+  await outra.waitForSelector('#new-line');
+  await pagina.fill('#new-line', 'texto pela metade');
+  await anotar(outra, 'Da outra aba');
+  await pagina.waitForTimeout(500);
+  assert.equal(await pagina.inputValue('#new-line'), 'texto pela metade');
+  await contexto.close();
+});
+
+test('apagar tudo em uma aba reinicia a outra, sem reviver dados', async () => {
+  const { contexto, pagina } = await novaPagina(amb, estadoBase());
+  await pagina.goto(amb.url + '?tela=anotar');
+  const outra = await contexto.newPage();
+  await outra.goto(amb.url + '?tela=anotar');
+  await pagina.waitForSelector('#new-line');
+  await outra.waitForSelector('#new-line');
+  await anotar(pagina, 'Vai sumir');
+  await outra.waitForFunction(() => document.body.innerText.includes('Vai sumir'));
+  await pagina.click('[data-act="go"][data-to="perfil"]');
+  await pagina.click('[data-act="reset"]');
+  await pagina.click('[data-act="reset"]');
+  await outra.waitForFunction(() => !document.querySelector('#new-line') && !document.body.innerText.includes('Vai sumir'), null, { timeout: 5000 });
+  await outra.reload();
+  await outra.waitForTimeout(500);
+  assert.equal((await outra.evaluate(() => document.body.innerText)).includes('Vai sumir'), false, 'dados não podem voltar');
+  await contexto.close();
+});
+
+test('o app pede armazenamento persistente ao abrir', async () => {
+  const { contexto, pagina } = await novaPagina(amb, estadoBase());
+  await pagina.addInitScript(() => { window.__persist = 0; if (navigator.storage) navigator.storage.persist = async () => { window.__persist++; return true; }; });
+  await pagina.goto(amb.url + '?tela=anotar');
+  await pagina.waitForSelector('#new-line');
+  assert.ok((await pagina.evaluate(() => window.__persist)) >= 1);
   await contexto.close();
 });
