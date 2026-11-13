@@ -441,12 +441,65 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
     ultimaChave = chave;
     fila = fila.then(() => dbPut(obj)).then(() => { if (canal) canal.postMessage({ tipo: 'atualizado' }); }).catch(() => { /* aviso já mostrado em dbPut */ });
   }
+  /* Validação: tudo o que vem de fora (cópia de segurança ou dados já guardados) é conferido campo a campo.
+     O que não tem o formato esperado é descartado ou trocado por um valor padrão, e nada disso vira código. */
+  const LIMITE_ITENS = 20000, LIMITE_TEXTO = 10000, LIMITE_ARQUIVO = 10 * 1024 * 1024;
+  const ehData = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  const txt = (v, max) => (typeof v === 'string' ? v.slice(0, max) : '');
+  const objs = (v) => (Array.isArray(v) ? v.filter((x) => x && typeof x === 'object' && !Array.isArray(x)) : []);
+  function listaTextos(v) {
+    const vistos = new Set(), r = [];
+    (Array.isArray(v) ? v : []).forEach((x) => { const t = txt(x, 200).trim(); if (t && !vistos.has(norm(t))) { vistos.add(norm(t)); r.push(t); } });
+    return r;
+  }
+  function limparCopia(obj) {
+    const base = fresh(), o = {};
+    if (!obj || typeof obj !== 'object') return o;
+    o.name = txt(obj.name, 80);
+    o.hora = typeof obj.hora === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(obj.hora) ? obj.hora : base.hora;
+    o.dias = Array.isArray(obj.dias) && obj.dias.length === 7 ? obj.dias.map((d) => d === true) : base.dias;
+    o.atrapalha = (Array.isArray(obj.atrapalha) ? obj.atrapalha : []).filter((k) => Number.isInteger(k) && k >= 0 && k < ATRAPALHA.length);
+    o.lembrete = obj.lembrete === true;
+    o.theme = ['light', 'dark', 'system'].includes(obj.theme) ? obj.theme : base.theme;
+    o.onboarded = obj.onboarded === true;
+    o.welcomed = obj.welcomed === true;
+    o.tips = {};
+    if (obj.tips && typeof obj.tips === 'object') Object.keys(obj.tips).forEach((k) => { if (/^[\w-]{1,40}$/.test(k) && obj.tips[k] === true) o.tips[k] = true; });
+    o.lastBackup = ehData(obj.lastBackup) ? obj.lastBackup : '';
+    o.lastNotified = ehData(obj.lastNotified) ? obj.lastNotified : '';
+    const ids = new Set();
+    o.items = objs(obj.items).slice(0, LIMITE_ITENS).map((i) => {
+      const texto = txt(i.text, LIMITE_TEXTO);
+      if (!texto.trim()) return null;
+      let id = typeof i.id === 'string' && /^[\w-]{1,64}$/.test(i.id) ? i.id : nid();
+      while (ids.has(id)) id = nid();
+      ids.add(id);
+      return {
+        id, text: texto, created: ehData(i.created) ? i.created : today(),
+        status: ['novo', 'aberto', 'resolvido', 'tarefa', 'solto'].includes(i.status) ? i.status : 'aberto',
+        type: TYPES.some((t) => t[0] === i.type) ? i.type : '',
+        person: txt(i.person, 200), tema: txt(i.tema, 200),
+        snoozeUntil: ehData(i.snoozeUntil) ? i.snoozeUntil : '', doneDate: ehData(i.doneDate) ? i.doneDate : '', focus: i.focus === true
+      };
+    }).filter(Boolean);
+    const idsT = new Set();
+    o.tasks = objs(obj.tasks).slice(0, LIMITE_ITENS).map((t) => {
+      const texto = txt(t.text, LIMITE_TEXTO);
+      if (!texto.trim()) return null;
+      let id = typeof t.id === 'string' && /^[\w-]{1,64}$/.test(t.id) ? t.id : nid();
+      while (idsT.has(id)) id = nid();
+      idsT.add(id);
+      return { id, text: texto, done: t.done === true, created: ehData(t.created) ? t.created : today(), itemId: typeof t.itemId === 'string' && ids.has(t.itemId) ? t.itemId : '' };
+    }).filter(Boolean);
+    o.people = listaTextos(obj.people);
+    o.temas = listaTextos(obj.temas);
+    o.temasArq = listaTextos(obj.temasArq);
+    if (typeof obj.savedAt === 'string' && !isNaN(new Date(obj.savedAt))) o.savedAt = obj.savedAt;
+    return o;
+  }
   function applyData(obj) {
-    PERSIST.forEach((k) => { if (obj[k] !== undefined) S[k] = obj[k]; });
-    if (!Array.isArray(S.dias) || S.dias.length !== 7) S.dias = fresh().dias;
-    ['items', 'tasks', 'people', 'temas', 'temasArq', 'atrapalha'].forEach((k) => { if (!Array.isArray(S[k])) S[k] = []; });
-    S.items.forEach((i) => { if (!i.created) i.created = today(); });
-    if (!S.tips || typeof S.tips !== 'object') S.tips = {};
+    const limpo = limparCopia(obj);
+    PERSIST.forEach((k) => { if (limpo[k] !== undefined) S[k] = limpo[k]; });
   }
   /* Outra aba (ou o app ao voltar) pode ter gravado algo novo: traz para cá sem apagar o que está sendo digitado. */
   function digitando() {
@@ -1054,11 +1107,13 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
       <div class="row"><button class="btn-s primary" data-act="import-ok">Restaurar</button><button class="btn-s" data-act="import-cancel">Cancelar</button></div></div>`;
   }
   function onImportFile(file) {
+    if (file.size > LIMITE_ARQUIVO) { toast('Esse arquivo é grande demais para ser uma cópia do Clarea.'); return; }
     const r = new FileReader();
     r.onload = () => {
       let obj = null;
       try { obj = JSON.parse(r.result); } catch (e) { obj = null; }
-      if (!obj || obj.app !== 'clarea' || !Array.isArray(obj.items)) { toast('Esse arquivo não parece ser uma cópia do Clarea.'); return; }
+      if (!obj || typeof obj !== 'object' || obj.app !== 'clarea' || !Array.isArray(obj.items)) { toast('Esse arquivo não parece ser uma cópia do Clarea.'); return; }
+      obj = limparCopia(obj);
       if (!S.onboarded && !S.items.length) { applyImport(obj); return; }
       S.pendingImport = obj; S.screen = 'perfil'; render(); document.getElementById('main').scrollTop = 0;
     };
