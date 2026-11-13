@@ -15,7 +15,7 @@ test('o service worker é registrado e guarda o app no aparelho', async () => {
   await pagina.goto(amb.url);
   await esperarServiceWorker(pagina);
   const guardados = await pagina.evaluate(async () => {
-    const nome = (await caches.keys()).find((n) => /^clarea-v\d+$/.test(n));
+    const nome = (await caches.keys()).find((n) => /^clarea-\d+\.\d+\.\d+$/.test(n));
     return nome ? (await (await caches.open(nome)).keys()).length : 0;
   });
   assert.ok(guardados >= 3, `esperava pelo menos 3 arquivos guardados, havia ${guardados}`);

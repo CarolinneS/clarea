@@ -1,4 +1,4 @@
-# Clarea · versão 1.0 (MVP)
+# Clarea · versão 1.0.1
 
 > Escreva como pensa. O Clarea organiza no fim do dia.
 
@@ -52,8 +52,17 @@ feat: MVP do Clarea como app instalável (Anotar, Clarear o dia, Hoje)
 ## Como publicar uma atualização
 
 1. Altere os arquivos.
-2. Em `sw.js`, aumente a versão na primeira linha útil: `clarea-v1` vira `clarea-v2`.
+2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.2`). Um teste automático avisa se algum ficar diferente.
 3. Envie para o GitHub. Quem já tem o app instalado recebe a versão nova ao abrir o app (às vezes é preciso fechar e abrir de novo).
+
+## O que mudou na 1.0.1 (estabilização)
+
+- O app abre e instala sem internet, com ícones próprios (antes, os ícones não existiam).
+- Cada anotação é gravada na hora; fechar o app logo depois não perde nada.
+- Duas abas abertas se atualizam sozinhas, sem apagar o que está sendo digitado.
+- O texto digitado não some ao tocar em tipo, pessoa ou tema, nem ao sair do app e voltar.
+- Cópias de segurança são conferidas antes de restaurar e não executam código.
+- Apagar uma anotação e limpar tarefas concluídas têm **Desfazer** (8 segundos).
 
 ## Limites desta versão
 
@@ -68,4 +77,4 @@ Os testes só servem para quem desenvolve; não fazem parte do app publicado.
 - **No GitHub:** a cada envio e a cada pull request, a aba **Actions** roda os testes sozinha.
 - **No computador** (precisa do Node 22 ou mais novo): `npm install`, depois `npx playwright install chromium` e `npm test`.
 
-Testes marcados como **TODO** são problemas já conhecidos, ligados à etapa que vai corrigi-los (por exemplo, `S0.3`). Eles aparecem na lista, mas não bloqueiam. Quando a correção entra, a marca `todo` é removida do teste, e ele passa a bloquear caso o problema volte.
+Testes marcados como **TODO** são problemas já conhecidos, ligados à etapa que vai corrigi-los (por exemplo, `E4`). Eles aparecem na lista, mas não bloqueiam. Quando a correção entra, a marca `todo` é removida do teste, e ele passa a bloquear caso o problema volte.
