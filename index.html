@@ -1161,7 +1161,30 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
     const meta = document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', dark ? '#16151C' : '#F5F3F8');
   }
+  /* Redesenhar a tela não pode apagar o que a pessoa está digitando: guarda os campos de texto
+     alterados antes de redesenhar e devolve depois, junto com o foco e o cursor. */
+  const CAMPOS_TEXTO = 'textarea, input:not([type]), input[type="text"], input[type="search"]';
+  function chaveCampo(el) { return el.id + '|' + ((el.form && el.form.dataset && el.form.dataset.id) || ''); }
+  function guardarDigitado() {
+    const salvo = {};
+    document.querySelectorAll(CAMPOS_TEXTO).forEach((el) => {
+      if (!el.id || el.value === el.defaultValue) return;
+      salvo[chaveCampo(el)] = { valor: el.value, foco: el === document.activeElement, ini: el.selectionStart, fim: el.selectionEnd };
+    });
+    return salvo;
+  }
+  function devolverDigitado(salvo) {
+    let focado = null;
+    document.querySelectorAll(CAMPOS_TEXTO).forEach((el) => {
+      const d = el.id && salvo[chaveCampo(el)];
+      if (!d) return;
+      el.value = d.valor;
+      if (d.foco) { focado = el; try { el.setSelectionRange(d.ini, d.fim); } catch (_) { /* tipo sem cursor */ } }
+    });
+    return focado;
+  }
   function render(focusId) {
+    const digitado = guardarDigitado();
     applyTheme();
     const scr = SCREENS[S.screen] || scrHoje;
     document.getElementById('main').innerHTML = scr();
@@ -1181,6 +1204,8 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
       const ring = document.getElementById('ring-resumo');
       if (ring) requestAnimationFrame(() => requestAnimationFrame(() => { ring.style.strokeDashoffset = '0'; }));
     }
+    const focado = devolverDigitado(digitado);
+    if (focado) focado.focus();
     if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); if (el.setSelectionRange && el.value) el.setSelectionRange(el.value.length, el.value.length); } }
     persist();
   }
@@ -1349,7 +1374,7 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
     const f = e.target;
     if (f.id === 'composer') {
       const inp = document.getElementById('new-line');
-      if (addItem(inp.value)) render('new-line');
+      if (addItem(inp.value)) { inp.value = ''; render('new-line'); }
     } else if (f.id === 'edit-form') {
       const it = byId(f.dataset.id), v = document.getElementById('edit-input').value.trim();
       if (it && v) it.text = v;
