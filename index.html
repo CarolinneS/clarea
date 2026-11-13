@@ -427,11 +427,19 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
     if (S.saved) Object.assign(o, JSON.parse(S.saved)); // em demonstração, guarda os dados reais, não os inventados
     return JSON.parse(JSON.stringify(o));
   }
-  let saveTimer = null;
+  /* Gravação: cada mudança é gravada na hora, em fila (uma de cada vez, na ordem),
+     e só quando algo realmente mudou. Assim nada se perde se o app for fechado em seguida. */
+  let ultimaChave = null;
+  let fila = Promise.resolve();
+  const canal = typeof BroadcastChannel === 'function' ? new BroadcastChannel('clarea') : null;
+  function chaveDe(obj) { const c = Object.assign({}, obj); delete c.savedAt; return JSON.stringify(c); }
   function persist() {
     if (!S.onboarded && !S.items.length) return;
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => dbPut(snapshot()), 300);
+    const obj = snapshot();
+    const chave = chaveDe(obj);
+    if (chave === ultimaChave) return;
+    ultimaChave = chave;
+    fila = fila.then(() => dbPut(obj)).then(() => { if (canal) canal.postMessage({ tipo: 'atualizado' }); }).catch(() => { /* aviso já mostrado em dbPut */ });
   }
   function applyData(obj) {
     PERSIST.forEach((k) => { if (obj[k] !== undefined) S[k] = obj[k]; });
@@ -439,6 +447,26 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
     ['items', 'tasks', 'people', 'temas', 'temasArq', 'atrapalha'].forEach((k) => { if (!Array.isArray(S[k])) S[k] = []; });
     S.items.forEach((i) => { if (!i.created) i.created = today(); });
     if (!S.tips || typeof S.tips !== 'object') S.tips = {};
+  }
+  /* Outra aba (ou o app ao voltar) pode ter gravado algo novo: traz para cá sem apagar o que está sendo digitado. */
+  function digitando() {
+    const a = document.activeElement;
+    return !!a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && /^(text|search|time|)$/.test(a.type))) && a.value !== '';
+  }
+  async function trazerDeFora() {
+    if (S.demo) return;
+    const saved = await dbGet();
+    if (!saved) return;
+    if (chaveDe(saved) === ultimaChave) return;
+    applyData(saved);
+    ultimaChave = chaveDe(snapshot());
+    if (!digitando()) render();
+  }
+  if (canal) {
+    canal.onmessage = (e) => {
+      if (e.data && e.data.tipo === 'apagado') { location.reload(); return; }
+      if (e.data && e.data.tipo === 'atualizado') trazerDeFora();
+    };
   }
 
   /* =========================================================
@@ -1307,6 +1335,8 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
       case 'reset':
         if (!S.confirmReset) { S.confirmReset = true; render(); return; }
         await dbClear();
+        ultimaChave = null;
+        if (canal) canal.postMessage({ tipo: 'apagado' });
         S = Object.assign(fresh(), { theme: S.theme });
         go('boas-vindas');
         toast('Tudo apagado deste aparelho.');
@@ -1363,7 +1393,10 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
     if (t.id === 'file-in' && t.files && t.files[0]) { onImportFile(t.files[0]); t.value = ''; }
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.sheet) { S.sheet = null; render(); } });
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.onboarded) { checkReminder(); render(); } });
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && S.onboarded) { trazerDeFora().then(() => { checkReminder(); if (!digitando()) render(); }); }
+  });
+  window.addEventListener('pagehide', () => { persist(); });
   if (window.matchMedia) { try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (S.theme === 'system') applyTheme(); }); } catch (e) { /* navegador antigo */ } }
 
   /* =========================================================
@@ -1372,12 +1405,14 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
   async function boot() {
     const saved = await dbGet();
     if (saved) applyData(saved);
+    ultimaChave = chaveDe(snapshot());
     S.screen = S.onboarded ? 'hoje' : 'boas-vindas';
     const params = new URLSearchParams(location.search);
     if (S.onboarded && params.get('tela') === 'anotar') S.screen = 'anotar';
     render(S.screen === 'anotar' ? 'new-line' : null);
     checkReminder();
     setInterval(checkReminder, 30000);
+    if (navigator.storage && navigator.storage.persist) { navigator.storage.persist().catch(() => { /* sem garantia extra, segue normal */ }); }
     if ('serviceWorker' in navigator && location.protocol !== 'file:') {
       navigator.serviceWorker.register('sw.js').catch(() => { /* sem modo offline, o app funciona igual */ });
     }
