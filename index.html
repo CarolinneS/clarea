@@ -1272,7 +1272,7 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
     t.innerHTML = `<span>${esc(msg)}</span>${undoable ? '<button data-act="undo">Desfazer</button>' : ''}`;
     t.hidden = false;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { t.hidden = true; }, undoable ? 5000 : 3200);
+    toastTimer = setTimeout(() => { t.hidden = true; }, undoable ? 8000 : 3200);
   }
   function doAction(id, how) {
     const it = byId(id);
@@ -1322,7 +1322,15 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
       case 'tips-reset': S.tips = {}; toast('As dicas vão aparecer de novo em cada tela.'); render(); break;
       case 'edit': S.editing = el.dataset.id; render('edit-input'); break;
       case 'edit-cancel': S.editing = null; render(); break;
-      case 'edit-del': S.items = S.items.filter((i) => i.id !== el.dataset.id); S.editing = null; render(); toast('Anotação apagada.'); break;
+      case 'edit-del': {
+        const pos = S.items.findIndex((i) => i.id === el.dataset.id);
+        if (pos < 0) break;
+        const removido = S.items[pos];
+        S.items.splice(pos, 1);
+        S.undo = { fn: () => { if (!S.items.some((i) => i.id === removido.id)) S.items.splice(Math.min(pos, S.items.length), 0, removido); } };
+        S.editing = null; render(); toast('Anotação apagada.', true);
+        break;
+      }
       case 'toggle-old': S.showOld = !S.showOld; render(); break;
       case 'clear-intro': go('clear-intro'); break;
       case 'clear-start': startClear(el.dataset.mode === '3'); render(); document.getElementById('main').scrollTop = 0; break;
@@ -1360,9 +1368,12 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
       case 'do': doAction(el.dataset.id, el.dataset.how); break;
       case 'undo': {
         if (!S.undo) return;
-        const it = byId(S.undo.snap.id);
-        if (it) Object.assign(it, S.undo.snap);
-        if (S.undo.taskId) S.tasks = S.tasks.filter((t) => t.id !== S.undo.taskId);
+        if (S.undo.fn) S.undo.fn();
+        else {
+          const it = byId(S.undo.snap.id);
+          if (it) Object.assign(it, S.undo.snap);
+          if (S.undo.taskId) S.tasks = S.tasks.filter((t) => t.id !== S.undo.taskId);
+        }
         S.undo = null;
         document.getElementById('toast').hidden = true;
         render();
@@ -1378,7 +1389,15 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
         S.sheet = null; render(); toast('Assunto atualizado.');
         break;
       }
-      case 'tasks-clean': S.tasks = S.tasks.filter((t) => !t.done); render(); break;
+      case 'tasks-clean': {
+        const antes = S.tasks.slice();
+        const feitas = antes.filter((t) => t.done).length;
+        if (!feitas) break;
+        S.tasks = antes.filter((t) => !t.done);
+        S.undo = { fn: () => { const ja = new Set(antes.map((t) => t.id)); S.tasks = antes.concat(S.tasks.filter((t) => !ja.has(t.id))); } };
+        render(); toast(feitas === 1 ? 'Tarefa concluída removida.' : `${feitas} tarefas concluídas removidas.`, true);
+        break;
+      }
       case 'sheet': S.sheet = { kind: el.dataset.kind, person: el.dataset.person }; render(); break;
       case 'sheet-close': case 'sheet-close-bg': S.sheet = null; render(); break;
       case 'copy': {
