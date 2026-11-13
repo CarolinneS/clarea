@@ -1,0 +1,31 @@
+name: Testes
+
+# Roda os testes a cada envio para a main e a cada pull request.
+# Falhas já conhecidas aparecem como "TODO" e não bloqueiam; qualquer outra falha bloqueia.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar ferramentas de teste (só desenvolvimento)
+        run: npm install --no-audit --no-fund
+
+      - name: Instalar o navegador de teste
+        run: npx playwright install --with-deps chromium
+
+      - name: Rodar os testes
+        run: npm test
