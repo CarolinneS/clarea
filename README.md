@@ -60,3 +60,12 @@ feat: MVP do Clarea como app instalável (Anotar, Clarear o dia, Hoje)
 - **Dados só no aparelho.** Trocar de celular ou limpar os dados do navegador apaga tudo. Use **Perfil › Salvar uma cópia** de vez em quando.
 - **Lembrete do Clarear o dia** só chega com o app aberto ou usado há pouco tempo. O lembrete garantido (push) entra com o servidor, na Fase 3.
 - **Sem login, IA, voz ou integrações.** Ficam para as próximas fases, como está no mapa de funcionalidades.
+
+## Testes automáticos
+
+Os testes só servem para quem desenvolve; não fazem parte do app publicado.
+
+- **No GitHub:** a cada envio e a cada pull request, a aba **Actions** roda os testes sozinha.
+- **No computador** (precisa do Node 22 ou mais novo): `npm install`, depois `npx playwright install chromium` e `npm test`.
+
+Testes marcados como **TODO** são problemas já conhecidos, ligados à etapa que vai corrigi-los (por exemplo, `S0.3`). Eles aparecem na lista, mas não bloqueiam. Quando a correção entra, a marca `todo` é removida do teste, e ele passa a bloquear caso o problema volte.
