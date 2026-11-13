@@ -1,0 +1,1389 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Clarea</title>
+<meta name="description" content="Escreva como pensa. O Clarea organiza no fim do dia.">
+<meta name="theme-color" content="#5B4BA8">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Clarea">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<style>
+/* Fonte: arquivos locais na pasta fonts/. Sem eles, o app usa a fonte do sistema. */
+@font-face { font-family: 'Atkinson Hyperlegible'; src: local('Atkinson Hyperlegible'), url('fonts/AtkinsonHyperlegible-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Atkinson Hyperlegible'; src: local('Atkinson Hyperlegible Bold'), url('fonts/AtkinsonHyperlegible-Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
+
+/* Identidade Lavanda, visual Lente viva. Tema claro é o padrão. */
+:root {
+  --bg: #F5F3F8; --surface: #FFFFFF; --surface-2: #ECE9F2; --line: #E4E0EC; --line-strong: #DCD7E6;
+  --text: #25232D; --muted: #5F5B6B;
+  --primary: #5B4BA8; --primary-ink: #FFFFFF; --primary-soft: #ECE8FA;
+  --ring: #7A6BC0; --ring-track: #E4DFF5; --dot: #A23E62;
+  --good: #22694A; --good-soft: #DDF0E5; --danger: #A23E62;
+  --shadow: rgba(63, 46, 140, 0.12); --overlay: rgba(37, 35, 45, 0.6);
+  --balloon-bg: #25232D; --balloon-fg: #F5F3F8; --balloon-muted: #DCD7E6; --balloon-accent: #C9BFF2;
+  --esp-fg: #5B4BA8; --esp-bg: #ECE8FA; --ret-fg: #A23E62; --ret-bg: #F8E4EB;
+  --con-fg: #1D6A73; --con-bg: #DDF0F1; --cv-fg: #765510; --cv-bg: #F5ECD6; --faz-fg: #4A4656; --faz-bg: #ECEAF0;
+  --av0-bg: #F3D6E0; --av0-fg: #8A2F52; --av1-bg: #D3ECEE; --av1-fg: #1D5F67;
+  --av2-bg: #F1E3C2; --av2-fg: #6B4C0E; --av3-bg: #E9E4FB; --av3-fg: #3F2E8C;
+  --age-w: #765510; --age-a: #A23E62;
+  --font: 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #16151C; --surface: #1F1E27; --surface-2: #2A2833; --line: #34323F; --line-strong: #3F3C4B;
+    --text: #E6E4EE; --muted: #A19DB0;
+    --primary: #B3A6E3; --primary-ink: #16151C; --primary-soft: #2A2640;
+    --ring: #B3A6E3; --ring-track: #2A2640; --dot: #E8B4C2;
+    --good: #9ED6BA; --good-soft: #1F3329; --danger: #E8B4C2;
+    --shadow: rgba(0, 0, 0, 0.4); --overlay: rgba(6, 5, 10, 0.72);
+    --balloon-bg: #E6E4EE; --balloon-fg: #16151C; --balloon-muted: #4A4656; --balloon-accent: #5B4BA8;
+    --esp-fg: #C9BFF2; --esp-bg: #2A2640; --ret-fg: #E8B4C2; --ret-bg: #3A2630;
+    --con-fg: #8FD0D6; --con-bg: #1D3436; --cv-fg: #E6C88F; --cv-bg: #362F22; --faz-fg: #C9C5D6; --faz-bg: #2A2833;
+    --av0-bg: #3A2630; --av0-fg: #E8B4C2; --av1-bg: #1D3436; --av1-fg: #8FD0D6;
+    --av2-bg: #362F22; --av2-fg: #E6C88F; --av3-bg: #2A2640; --av3-fg: #C9BFF2;
+    --age-w: #E6C88F; --age-a: #E8B4C2;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #16151C; --surface: #1F1E27; --surface-2: #2A2833; --line: #34323F; --line-strong: #3F3C4B;
+  --text: #E6E4EE; --muted: #A19DB0;
+  --primary: #B3A6E3; --primary-ink: #16151C; --primary-soft: #2A2640;
+  --ring: #B3A6E3; --ring-track: #2A2640; --dot: #E8B4C2;
+  --good: #9ED6BA; --good-soft: #1F3329; --danger: #E8B4C2;
+  --shadow: rgba(0, 0, 0, 0.4); --overlay: rgba(6, 5, 10, 0.72);
+  --balloon-bg: #E6E4EE; --balloon-fg: #16151C; --balloon-muted: #4A4656; --balloon-accent: #5B4BA8;
+  --esp-fg: #C9BFF2; --esp-bg: #2A2640; --ret-fg: #E8B4C2; --ret-bg: #3A2630;
+  --con-fg: #8FD0D6; --con-bg: #1D3436; --cv-fg: #E6C88F; --cv-bg: #362F22; --faz-fg: #C9C5D6; --faz-bg: #2A2833;
+  --av0-bg: #3A2630; --av0-fg: #E8B4C2; --av1-bg: #1D3436; --av1-fg: #8FD0D6;
+  --av2-bg: #362F22; --av2-fg: #E6C88F; --av3-bg: #2A2640; --av3-fg: #C9BFF2;
+  --age-w: #E6C88F; --age-a: #E8B4C2;
+  color-scheme: dark;
+}
+
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--bg); color: var(--text); font-family: var(--font); font-size: 16px; line-height: 1.45;
+  padding: env(safe-area-inset-top, 0px) max(16px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(16px, env(safe-area-inset-left, 0px));
+  box-sizing: border-box; -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--primary); }
+:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+p { margin: 0; }
+h1 { margin: 0; font-size: 28px; line-height: 1.15; text-wrap: balance; letter-spacing: -0.01em; }
+h2 { margin: 0; font-size: 20px; line-height: 1.25; }
+.big { font-size: 32px; }
+
+.app { max-width: 440px; margin: 0 auto; height: 100%; display: flex; flex-direction: column; }
+main { flex: 1; min-height: 0; overflow-y: auto; padding-block: 24px; display: flex; flex-direction: column; gap: 18px; }
+main > * { flex-shrink: 0; }
+#dock:empty { display: none; }
+#dock { padding-block: 10px; display: flex; flex-direction: column; gap: 6px; }
+.stack { display: flex; flex-direction: column; gap: 16px; }
+.stack-s { display: flex; flex-direction: column; gap: 8px; }
+.row { display: flex; align-items: center; gap: 10px; }
+.between { justify-content: space-between; }
+.wrap { flex-wrap: wrap; }
+.grow { flex: 1; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+.xs { font-size: 13px; }
+.lead { font-size: 18px; color: var(--muted); }
+.center { text-align: center; align-items: center; }
+.label { font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+
+.btn { min-height: 56px; border-radius: 16px; border: 1px solid var(--line-strong); background: var(--surface); padding: 0 18px; font-weight: 700; font-size: 17px; width: 100%; }
+.btn-primary { background: var(--primary); color: var(--primary-ink); border-color: transparent; }
+.btn[disabled] { opacity: .45; cursor: default; }
+.btn-s { min-height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); padding: 0 16px; font-size: 15px; }
+.btn-s.primary { background: var(--primary); color: var(--primary-ink); border-color: transparent; font-weight: 700; }
+.link { background: none; border: none; color: var(--primary); min-height: 44px; padding: 0 4px; font-size: 15px; text-decoration: underline; text-underline-offset: 3px; }
+.link.quiet { color: var(--muted); }
+.link.danger { color: var(--danger); }
+.link[disabled] { opacity: .4; text-decoration: none; cursor: default; }
+.icon-btn { width: 44px; height: 44px; flex-shrink: 0; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--text); display: inline-flex; align-items: center; justify-content: center; }
+.me { width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; border: none; background: var(--av3-bg); color: var(--av3-fg); font-weight: 700; font-size: 17px; display: inline-flex; align-items: center; justify-content: center; }
+.me.glow { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--ring); }
+
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 16px; }
+.soft { background: var(--primary-soft); border-radius: 20px; padding: 16px; }
+.ava { width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; font-weight: 700; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+.ava.lg { width: 56px; height: 56px; font-size: 18px; }
+.ava.c0 { background: var(--av0-bg); color: var(--av0-fg); } .ava.c1 { background: var(--av1-bg); color: var(--av1-fg); }
+.ava.c2 { background: var(--av2-bg); color: var(--av2-fg); }
+.ava.none { background: var(--surface-2); color: var(--muted); border-radius: 12px; }
+
+.tp { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.tp.esperando { background: var(--esp-bg); color: var(--esp-fg); } .tp.retomar { background: var(--ret-bg); color: var(--ret-fg); }
+.tp.confirmar { background: var(--con-bg); color: var(--con-fg); } .tp.conversar { background: var(--cv-bg); color: var(--cv-fg); }
+.tp.fazer { background: var(--faz-bg); color: var(--faz-fg); }
+.age { font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.age.w { color: var(--age-w); } .age.a { color: var(--age-a); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
+
+input[type="text"], input[type="search"], input[type="time"], input:not([type]), select {
+  width: 100%; height: 56px; background: var(--surface); color: var(--text); border: 2px solid var(--line-strong);
+  border-radius: 16px; padding: 0 16px; font-size: 17px; outline: none;
+}
+input:focus, select:focus { border-color: var(--ring); }
+::placeholder { color: var(--muted); opacity: .85; }
+
+.hero { margin: -24px calc(-1 * max(16px, env(safe-area-inset-right, 0px))) 0 calc(-1 * max(16px, env(safe-area-inset-left, 0px))); height: 340px; background: var(--primary-soft); border-radius: 0 0 40px 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+.wordmark { font-size: 30px; font-weight: 700; }
+.steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; flex: 1; }
+.steps span { height: 6px; border-radius: 3px; background: var(--line-strong); }
+.steps span.on { background: var(--primary); }
+.opt { display: flex; align-items: center; gap: 12px; min-height: 58px; padding: 0 16px; border-radius: 16px; border: 1px solid var(--line-strong); background: var(--surface); text-align: left; font-size: 16px; width: 100%; }
+.opt[aria-pressed="true"] { border: 2px solid var(--primary); background: var(--primary-soft); font-weight: 700; }
+.check { width: 22px; height: 22px; flex-shrink: 0; border-radius: 6px; border: 2px solid var(--line-strong); display: inline-flex; align-items: center; justify-content: center; }
+.opt[aria-pressed="true"] .check { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.grid7 { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.tog { min-height: 48px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); font-size: 16px; }
+.tog[aria-pressed="true"] { border: 2px solid var(--primary); background: var(--primary-soft); color: var(--text); font-weight: 700; }
+.day[aria-pressed="true"] { background: var(--primary); color: var(--primary-ink); border-color: transparent; }
+.notif { width: 100%; display: flex; gap: 12px; align-items: flex-start; padding: 14px; border-radius: 18px; background: var(--surface); box-shadow: 0 8px 24px var(--shadow); text-align: left; }
+.choice { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 18px; border-radius: 20px; border: 1px solid var(--line-strong); background: var(--surface); width: 100%; }
+.choice.rec { border: 2px solid var(--primary); }
+.choice strong { font-size: 18px; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pill { display: inline-flex; align-items: center; min-height: 32px; padding: 0 12px; border-radius: 999px; font-size: 14px; background: var(--surface); border: 1px solid var(--line); color: var(--muted); }
+.pill.on { background: var(--primary-soft); color: var(--primary); border-color: transparent; font-weight: 700; }
+.lines { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; }
+.lines li + li { border-top: 1px solid var(--line); }
+.line { width: 100%; text-align: left; background: none; border: none; padding: 14px 16px; font-size: 17px; display: flex; gap: 8px; align-items: baseline; justify-content: space-between; }
+.mention { color: var(--ret-fg); font-weight: 700; } .hash { color: var(--esp-fg); font-weight: 700; }
+.edit { display: flex; flex-direction: column; gap: 8px; padding: 12px; }
+.fold { display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 0 16px; border-radius: 14px; border: 1px dashed var(--line-strong); background: transparent; color: var(--muted); font-size: 15px; width: 100%; }
+.fold svg { transition: transform .15s; } .fold[aria-expanded="true"] svg { transform: rotate(180deg); }
+.quiet-list { list-style: none; margin: 0; padding: 0 4px; display: flex; flex-direction: column; gap: 8px; }
+.quiet-list li { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; color: var(--muted); }
+.composer { display: flex; gap: 8px; padding: 10px; border-radius: 22px; background: var(--surface); border: 1px solid var(--line); }
+.composer input { height: 52px; border-color: var(--ring); }
+.composer .send { width: 52px; height: 52px; flex-shrink: 0; border: none; border-radius: 14px; background: var(--primary); color: var(--primary-ink); display: inline-flex; align-items: center; justify-content: center; }
+.hint { font-size: 13px; color: var(--muted); padding-left: 6px; }
+.empty { display: flex; flex-direction: column; gap: 6px; padding: 24px 12px; text-align: center; align-items: center; }
+.tip { display: flex; gap: 12px; align-items: flex-start; }
+
+.bar { height: 6px; border-radius: 3px; background: var(--ring-track); overflow: hidden; }
+.bar > span { display: block; height: 100%; background: var(--ring); border-radius: 3px; transition: width .25s; }
+.clear-wrap { display: flex; flex-direction: column; gap: 12px; }
+.clear-card { display: flex; flex-direction: column; gap: 16px; padding: 20px; border-radius: 24px; background: var(--surface); border: 1px solid var(--line); }
+.clear-text { font-size: 21px; font-weight: 700; line-height: 1.3; }
+.chip { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); font-size: 15px; }
+.chip.has-ava { padding-left: 5px; }
+.chip.has-ava .ava { width: 32px; height: 32px; font-size: 12px; }
+.chip[aria-pressed="true"] { border: 2px solid var(--primary); background: var(--primary-soft); font-weight: 700; }
+.chip.add { border-style: dashed; color: var(--muted); background: transparent; }
+.why { font-size: 13px; color: var(--muted); line-height: 1.5; }
+.add-form { display: flex; gap: 8px; }
+.add-form input { height: 44px; font-size: 16px; padding: 0 12px; }
+.two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.two .btn { min-height: 48px; font-size: 16px; }
+.good-text { color: var(--good); }
+
+.lens-card { display: flex; align-items: center; gap: 18px; padding: 18px; border-radius: 24px; background: var(--surface); border: 1px solid var(--line); }
+.lens-card svg { flex-shrink: 0; }
+.ring-fill { transition: stroke-dashoffset .9s ease; }
+.lens-title { font-size: 19px; font-weight: 700; line-height: 1.25; }
+.focus-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.focus { padding: 0; overflow: hidden; }
+.focus-head { width: 100%; text-align: left; background: none; border: none; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
+.focus-text { font-size: 17px; font-weight: 700; line-height: 1.35; }
+.actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 0 16px 8px; }
+.act { min-height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; line-height: 1.15; padding: 0 4px; }
+.act.good { background: var(--good-soft); color: var(--good); border-color: transparent; font-weight: 700; }
+.act.soft { color: var(--muted); }
+.people { display: flex; gap: 14px; overflow-x: auto; padding: 4px 2px; }
+.person { display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none; padding: 0; font-size: 13px; min-width: 64px; }
+.tasks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.tasks label { display: flex; gap: 12px; align-items: center; min-height: 48px; font-size: 16px; }
+.tasks input { width: 22px; height: 22px; accent-color: var(--primary); flex-shrink: 0; }
+.tasks .done span { text-decoration: line-through; color: var(--muted); }
+
+nav.tabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; padding-block: 8px 10px; border-top: 1px solid var(--line); }
+nav.tabs button { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 3px; min-height: 52px; justify-content: center; font-size: 13px; color: var(--muted); }
+nav.tabs button[aria-current="page"] { color: var(--primary); font-weight: 700; }
+nav.tabs .fab { justify-self: center; flex-direction: row; gap: 8px; min-height: 52px; padding: 0 22px; border-radius: 999px; background: var(--primary); color: var(--primary-ink); font-size: 16px; font-weight: 700; box-shadow: 0 6px 18px var(--shadow); }
+nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
+
+.seg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 14px; background: var(--surface-2); }
+.seg button { min-height: 40px; border-radius: 10px; border: none; background: transparent; font-size: 15px; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--text); font-weight: 700; box-shadow: 0 1px 3px var(--shadow); }
+.hist { list-style: none; margin: 0; padding: 0; }
+.hist li { display: flex; flex-direction: column; gap: 6px; padding: 12px 2px; border-bottom: 1px solid var(--line); }
+.st { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--faz-fg); }
+.st.res { background: var(--good-soft); color: var(--good); } .st.seg { background: var(--primary-soft); color: var(--primary); }
+.stat-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.stat { padding: 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line); }
+.stat strong { display: block; font-size: 26px; font-variant-numeric: tabular-nums; }
+.hbar { display: flex; flex-direction: column; gap: 4px; }
+.hbar-track { height: 10px; border-radius: 5px; background: var(--ring-track); overflow: hidden; }
+.hbar-track span { display: block; height: 100%; border-radius: 5px; background: var(--ring); }
+
+.theme-opts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.theme-opt { display: flex; flex-direction: column; gap: 8px; align-items: center; padding: 10px 8px; border-radius: 16px; border: 1px solid var(--line-strong); background: var(--surface); font-size: 14px; }
+.theme-opt[aria-pressed="true"] { border: 2px solid var(--primary); font-weight: 700; }
+.mini { width: 100%; height: 52px; border-radius: 10px; display: flex; flex-direction: column; gap: 5px; padding: 8px; }
+.mini i { display: block; height: 6px; border-radius: 3px; }
+.mini.l { background: #F5F3F8; border: 1px solid #E4E0EC; } .mini.l i:nth-child(1) { width: 60%; background: #25232D; } .mini.l i:nth-child(2) { height: 12px; background: #FFFFFF; border: 1px solid #E4E0EC; } .mini.l i:nth-child(3) { width: 40%; background: #7A6BC0; }
+.mini.d { background: #16151C; } .mini.d i:nth-child(1) { width: 60%; background: #E6E4EE; } .mini.d i:nth-child(2) { height: 12px; background: #1F1E27; border: 1px solid #34323F; } .mini.d i:nth-child(3) { width: 40%; background: #B3A6E3; }
+.mini.s { flex-direction: row; padding: 0; overflow: hidden; border: 1px solid #E4E0EC; } .mini.s i { flex: 1; height: 100%; border-radius: 0; } .mini.s i:first-child { background: #F5F3F8; } .mini.s i:last-child { background: #16151C; }
+.list-card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; }
+.list-card > * + * { border-top: 1px solid var(--line); }
+.list-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 56px; padding: 0 16px; width: 100%; background: none; border-left: none; border-right: none; border-bottom: none; text-align: left; font-size: 16px; }
+.list-row:first-child { border-top: none; }
+.switch { width: 48px; height: 28px; border-radius: 999px; background: var(--line-strong); position: relative; flex-shrink: 0; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #FFFFFF; transition: left .15s; }
+.switch.on { background: var(--primary); } .switch.on::after { left: 23px; }
+
+.tour-ov { position: fixed; inset: 0; background: var(--overlay); z-index: 40; }
+.tour-focus { position: relative; z-index: 45; }
+.balloon { position: relative; z-index: 50; display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 22px; background: var(--surface); box-shadow: 0 16px 40px rgba(20, 16, 40, 0.3); }
+.balloon.dark { background: var(--balloon-bg); color: var(--balloon-fg); }
+.balloon.dark .muted { color: var(--balloon-muted); }
+.balloon.dark .step { color: var(--balloon-accent); }
+.step { font-size: 13px; font-weight: 700; color: var(--primary); }
+.b-title { font-size: 20px; line-height: 1.3; font-weight: 700; }
+.ver-b { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: min(408px, calc(100% - 32px)); }
+.demo-bar { position: sticky; top: 0; z-index: 5; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(100px + env(safe-area-inset-bottom, 0px)); max-width: min(408px, calc(100% - 32px)); background: var(--text); color: var(--bg); padding: 10px 14px; border-radius: 12px; font-size: 15px; display: flex; gap: 14px; align-items: center; z-index: 60; box-shadow: 0 6px 24px rgba(0, 0, 0, .25); }
+.toast button { background: none; border: none; color: inherit; font-weight: 700; text-decoration: underline; min-height: 36px; padding: 0; }
+.overlay { position: fixed; inset: 0; background: rgba(10, 9, 14, .55); z-index: 30; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { width: 100%; max-width: 472px; max-height: 88%; overflow-y: auto; background: var(--bg); border-radius: 24px 24px 0 0;
+  padding: 20px max(16px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+  display: flex; flex-direction: column; gap: 14px; }
+.sheet pre { margin: 0; white-space: pre-wrap; font-family: inherit; font-size: 15px; line-height: 1.5; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; max-height: 320px; overflow-y: auto; }
+.foot { font-size: 12px; color: var(--muted); text-align: center; }
+
+@media (prefers-reduced-motion: reduce) { *, .ring-fill { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <main id="main"><p class="muted" style="padding-top:40px;text-align:center">Carregando…</p></main>
+  <div id="dock"></div>
+  <nav class="tabs" id="nav" aria-label="Navegação principal" hidden></nav>
+</div>
+<div id="tour-ov" class="tour-ov" hidden></div>
+<div id="ver-b"></div>
+<div id="sheet"></div>
+<div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
+<input type="file" id="file-in" accept=".json,application/json" hidden>
+
+<script>
+(function () {
+  'use strict';
+  const VERSAO = '1.0 (MVP)';
+
+  /* =========================================================
+     1. Ícones e desenhos
+     ========================================================= */
+  const svg = (d, s = 22, w = 2) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  const IC = {
+    hoje: svg('<circle cx="12" cy="12" r="8"/><circle cx="14" cy="10" r="2.5" fill="currentColor"/>', 24),
+    plus: svg('<path d="M12 5v14M5 12h14"/>', 20, 2.5),
+    hist: svg('<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 3"/>', 24),
+    back: svg('<path d="M15 6l-6 6 6 6"/>', 20),
+    chev: svg('<path d="M6 9l6 6 6-6"/>', 18),
+    send: svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 22),
+    lock: svg('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>', 14),
+    tick: svg('<path d="M5 12l5 5 9-10"/>', 14, 3),
+    x: svg('<path d="M6 6l12 12M18 6L6 18"/>', 18),
+    light: svg('<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.5 1 2.5h6c0-1 .3-1.8 1-2.5A6 6 0 0 0 12 3z"/>', 22)
+  };
+  const logo = (s, full) => `<svg width="${s}" height="${s}" viewBox="0 0 64 64" role="img" aria-label="Clarea">${full ? '' : '<circle cx="32" cy="32" r="21" fill="none" style="stroke:var(--ring-track)" stroke-width="6"/>'}<circle cx="32" cy="32" r="21" fill="none" style="stroke:var(--ring)" stroke-width="6" stroke-linecap="round" ${full ? '' : 'stroke-dasharray="92 132" transform="rotate(-90 32 32)"'}/><circle cx="38" cy="27" r="6.5" style="fill:var(--dot)"/></svg>`;
+  const CIRC = 289.03;
+  const lens = (size, pct, id) => `<svg width="${size}" height="${size}" viewBox="0 0 112 112" role="img" aria-label="Seu dia está ${Math.round(pct * 100)}% claro">
+      <circle cx="56" cy="56" r="46" fill="none" style="stroke:var(--ring-track)" stroke-width="12"/>
+      <circle ${id ? `id="${id}"` : ''} class="ring-fill" cx="56" cy="56" r="46" fill="none" style="stroke:var(--ring)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC * (1 - pct)}" transform="rotate(-90 56 56)"/>
+      <circle cx="70" cy="40" r="9" style="fill:var(--dot)"/>
+      <text x="56" y="66" text-anchor="middle" font-size="25" font-weight="700" style="fill:var(--text);font-family:var(--font)">${Math.round(pct * 100)}%</text></svg>`;
+
+  /* =========================================================
+     2. Utilidades de texto e data
+     ========================================================= */
+  const TYPES = [['esperando', 'Esperando'], ['retomar', 'Retomar'], ['confirmar', 'Confirmar'], ['conversar', 'Conversar'], ['fazer', 'Fazer']];
+  const typeLabel = (k) => (TYPES.find((t) => t[0] === k) || [])[1] || '';
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
+  const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
+  const nid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const today = () => iso(new Date());
+  const addDays = (s, n) => { const [y, m, d] = s.split('-').map(Number); return iso(new Date(y, m - 1, d + n)); };
+  const diffDays = (a, b) => { const [y1, m1, d1] = a.split('-').map(Number), [y2, m2, d2] = b.split('-').map(Number); return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 864e5); };
+  const ageOf = (i) => Math.max(0, diffDays(i.created, today()));
+  const ageText = (a) => (a <= 0 ? 'hoje' : a === 1 ? 'há 1 dia' : `há ${a} dias`);
+  const ageCls = (a) => (a <= 2 ? '' : a <= 4 ? 'w' : 'a');
+  const ageTag = (i) => { const a = ageOf(i); return `<span class="age ${ageCls(a)}">● ${ageText(a)}</span>`; };
+  const horaLabel = (h) => { const [hh, mm] = (h || '18:00').split(':'); return mm === '00' ? `${Number(hh)}h` : `${Number(hh)}h${mm}`; };
+  const dateLong = () => new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+  const dateShort = (s) => { const [y, m, d] = (s || today()).split('-'); return `${d}/${m}`; };
+  const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; };
+  const initials = (n) => norm(n).replace(/[^a-z]/g, '').slice(0, 2).toUpperCase() || '·';
+  const myInitial = () => (initials(S.name || 'Você')[0] || 'V');
+  const avaCls = (n) => { let h = 0; for (const c of norm(n)) h = (h * 31 + c.charCodeAt(0)) % 997; return 'c' + (h % 3); };
+  const ava = (n, big) => (n ? `<span class="ava ${avaCls(n)} ${big ? 'lg' : ''}" aria-hidden="true">${initials(n)}</span>` : `<span class="ava none" aria-hidden="true">·</span>`);
+  const tp = (k) => (k ? `<span class="tp ${k}">${typeLabel(k)}</span>` : '');
+  const fmt1 = (n) => n.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+
+  /* =========================================================
+     3. Estado
+     Tudo o que está em PERSIST é guardado no aparelho (IndexedDB).
+     ========================================================= */
+  const PERSIST = ['name', 'hora', 'dias', 'atrapalha', 'lembrete', 'theme', 'onboarded', 'welcomed', 'tips', 'lastBackup', 'lastNotified', 'items', 'tasks', 'people', 'temas', 'temasArq'];
+  const DATA_KEYS = ['items', 'tasks', 'people', 'temas', 'temasArq'];
+  const fresh = () => ({
+    // guardado
+    name: '', hora: '18:00', dias: [true, true, true, true, true, false, false], atrapalha: [], lembrete: false, theme: 'light',
+    onboarded: false, welcomed: false, tips: {}, lastBackup: '', lastNotified: '',
+    items: [], tasks: [], people: [], temas: [], temasArq: [],
+    // só da sessão
+    screen: 'boas-vindas', otherHora: false, tour: null, ver: null, demo: false, saved: null,
+    clear: null, expanded: null, editing: null, showOld: false, sheet: null, q: '', histTab: 'lista',
+    undo: null, confirmReset: false, ringFrom: 0, pick: [], pendingImport: null, editSel: null, personEdit: null, temaEdit: null
+  });
+  let S = fresh();
+
+  const novos = () => S.items.filter((i) => i.status === 'novo');
+  const abertos = () => S.items.filter((i) => i.status === 'aberto');
+  const isSnoozed = (i) => i.snoozeUntil && i.snoozeUntil > today();
+  const visiveis = () => abertos().filter((i) => !isSnoozed(i));
+  const guardados = () => abertos().filter(isSnoozed);
+  const byId = (id) => S.items.find((i) => i.id === id);
+  const doneToday = () => S.items.filter((i) => i.doneDate === today() && (i.status === 'resolvido' || i.status === 'tarefa')).length;
+  const dayPct = () => { const d = doneToday(), o = visiveis().length; return d + o ? d / (d + o) : 0; };
+  const activeTemas = () => S.temas.filter((t) => !S.temasArq.some((a) => norm(a) === norm(t)));
+
+  function addItem(text, extra) {
+    const t = String(text || '').trim();
+    if (!t) return null;
+    const it = Object.assign({ id: nid(), text: t, created: today(), status: 'novo', type: '', person: '', tema: '', snoozeUntil: '', doneDate: '', focus: false }, extra || {});
+    S.items.push(it);
+    return it;
+  }
+  function learn(person, tema) {
+    if (person && !S.people.some((p) => norm(p) === norm(person))) S.people.push(person);
+    if (tema && !S.temas.some((p) => norm(p) === norm(tema))) S.temas.push(tema);
+  }
+
+  /* =========================================================
+     4. Guardar no aparelho (IndexedDB, com plano B no localStorage)
+     ========================================================= */
+  const DB_NAME = 'clarea', STORE = 'kv', KEY = 'estado';
+  let dbPromise = null;
+  function idb() {
+    if (!dbPromise) {
+      dbPromise = new Promise((res, rej) => {
+        try {
+          const r = indexedDB.open(DB_NAME, 1);
+          r.onupgradeneeded = () => r.result.createObjectStore(STORE);
+          r.onsuccess = () => res(r.result);
+          r.onerror = () => rej(r.error);
+        } catch (e) { rej(e); }
+      });
+    }
+    return dbPromise;
+  }
+  async function dbGet() {
+    try {
+      const db = await idb();
+      return await new Promise((res, rej) => { const q = db.transaction(STORE).objectStore(STORE).get(KEY); q.onsuccess = () => res(q.result || null); q.onerror = () => rej(q.error); });
+    } catch (e) {
+      try { const j = localStorage.getItem('clarea-estado'); return j ? JSON.parse(j) : null; } catch (_) { return null; }
+    }
+  }
+  async function dbPut(obj) {
+    try {
+      const db = await idb();
+      await new Promise((res, rej) => { const tx = db.transaction(STORE, 'readwrite'); tx.objectStore(STORE).put(obj, KEY); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
+    } catch (e) {
+      try { localStorage.setItem('clarea-estado', JSON.stringify(obj)); } catch (_) { toast('Não consegui salvar neste navegador. Salve uma cópia no Perfil.'); }
+    }
+  }
+  async function dbClear() {
+    try { const db = await idb(); await new Promise((res) => { const tx = db.transaction(STORE, 'readwrite'); tx.objectStore(STORE).delete(KEY); tx.oncomplete = res; tx.onerror = res; }); } catch (e) { /* nada */ }
+    try { localStorage.removeItem('clarea-estado'); } catch (e) { /* nada */ }
+  }
+  function snapshot() {
+    const o = { app: 'clarea', v: 1, savedAt: new Date().toISOString() };
+    PERSIST.forEach((k) => { o[k] = S[k]; });
+    if (S.saved) Object.assign(o, JSON.parse(S.saved)); // em demonstração, guarda os dados reais, não os inventados
+    return JSON.parse(JSON.stringify(o));
+  }
+  let saveTimer = null;
+  function persist() {
+    if (!S.onboarded && !S.items.length) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => dbPut(snapshot()), 300);
+  }
+  function applyData(obj) {
+    PERSIST.forEach((k) => { if (obj[k] !== undefined) S[k] = obj[k]; });
+    if (!Array.isArray(S.dias) || S.dias.length !== 7) S.dias = fresh().dias;
+    ['items', 'tasks', 'people', 'temas', 'temasArq', 'atrapalha'].forEach((k) => { if (!Array.isArray(S[k])) S[k] = []; });
+    S.items.forEach((i) => { if (!i.created) i.created = today(); });
+    if (!S.tips || typeof S.tips !== 'object') S.tips = {};
+  }
+
+  /* =========================================================
+     5. Sugestões por regras (a IA entra na Fase 3)
+     ========================================================= */
+  const STOP = new Set(['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo', 'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro', 'deus']);
+  const TYPE_RULES = [
+    ['esperando', /\b(aguardando|aguardar|esperando|esperar|retorno|resposta)\b/],
+    ['retomar', /\b(cobrar|retomar|lembrar|pedir)\b/],
+    ['confirmar', /\b(confirmar|validar|checar|conferir)\b/],
+    ['conversar', /\b(conversar|falar com|ver com|alinhar)\b/]
+  ];
+  const wordIn = (needle, hay) => new RegExp('(^|[^a-z0-9])' + needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^a-z0-9])').test(hay);
+  function suggest(text) {
+    const t = norm(text);
+    const r = { type: 'fazer', person: '', tema: '', why: '' };
+    const reasons = [];
+    for (const [k, re] of TYPE_RULES) { const m = t.match(re); if (m) { r.type = k; reasons.push(`pela palavra “${m[1]}”`); break; } }
+    const at = text.match(/@([\p{L}]+)/u);
+    if (at) r.person = S.people.find((p) => norm(p) === norm(at[1])) || cap(at[1]);
+    if (!r.person) r.person = S.people.find((p) => wordIn(norm(p), t)) || '';
+    if (!r.person) {
+      const tit = text.match(/(?:^|\s)(?:Dr|Dra|Sr|Sra|Prof|Profa)\.?\s+(\p{Lu}\p{Ll}+)/u);
+      if (tit) r.person = tit[1];
+    }
+    if (!r.person) {
+      const m = text.match(/(?:^|\s)(?:com|da|do|de|a|o|à|pela|pelo|para|pra)\s+(\p{Lu}\p{Ll}+)(?!\.)/u);
+      if (m && !STOP.has(norm(m[1])) && !S.temas.some((p) => norm(p).split(' ').includes(norm(m[1])))) r.person = m[1];
+    }
+    if (r.person) {
+      const n = S.items.filter((i) => i.status !== 'novo' && norm(i.person) === norm(r.person)).length;
+      reasons.push(n ? `porque ${r.person} já apareceu em ${plural(n, 'item', 'itens')}` : `pelo nome ${r.person} no texto`);
+    }
+    const tag = text.match(/#([\p{L}\d]+)/u);
+    const temas = activeTemas();
+    if (tag) r.tema = temas.find((p) => norm(p).replace(/\s/g, '') === norm(tag[1])) || cap(tag[1]);
+    if (!r.tema) r.tema = temas.find((p) => wordIn(norm(p), t) || norm(p).split(' ').some((w) => w.length > 3 && wordIn(w, t))) || '';
+    if (!r.tema && r.person) {
+      const count = {};
+      S.items.forEach((i) => { if (norm(i.person) === norm(r.person) && i.tema && temas.includes(i.tema)) count[i.tema] = (count[i.tema] || 0) + 1; });
+      const best = Object.keys(count).sort((a, b) => count[b] - count[a])[0];
+      if (best) r.tema = best;
+    }
+    r.why = reasons.length ? 'Sugerido ' + reasons.join(' e ') + '.' : 'Sem pistas no texto: escolha se quiser, ou pule.';
+    return r;
+  }
+
+  /* =========================================================
+     6. Exemplo inventado (passeio e demonstração)
+     ========================================================= */
+  function seedDemo() {
+    const d = (n) => addDays(today(), -n);
+    ['Ana', 'Bruno', 'Carla'].forEach((p) => learn(p, ''));
+    ['Produto Alpha', 'Operações', 'Pessoas'].forEach((p) => learn('', p));
+    addItem('Aguardando retorno da Ana sobre o orçamento', { created: d(6), status: 'aberto', type: 'esperando', person: 'Ana', tema: 'Produto Alpha', focus: true });
+    addItem('Cobrar a Ana pela lista de requisitos', { created: d(5), status: 'aberto', type: 'retomar', person: 'Ana', tema: 'Produto Alpha', focus: true });
+    addItem('Confirmar sala para o treinamento de sexta', { created: d(3), status: 'aberto', type: 'confirmar', tema: 'Operações' });
+    addItem('Conversar com o Bruno sobre a escala de suporte', { created: d(1), status: 'aberto', type: 'conversar', person: 'Bruno', tema: 'Operações', focus: true });
+    addItem('Aguardando a Carla validar o plano de férias', { created: d(4), status: 'resolvido', type: 'esperando', person: 'Carla', tema: 'Pessoas', doneDate: today() });
+    addItem('Mandar o resumo da reunião para a Carla', { created: d(2), status: 'resolvido', type: 'fazer', person: 'Carla', tema: 'Pessoas', doneDate: today() });
+    addItem('Revisar o texto do comunicado do Alpha');
+    addItem('Mandar a pauta da reunião de equipe #Pessoas');
+    addItem('Ver com o Bruno a escala do feriado');
+    addItem('Esperando o Daniel mandar o relatório de custos');
+  }
+  function stashRealData() {
+    S.saved = JSON.stringify(Object.fromEntries(DATA_KEYS.map((k) => [k, S[k]])));
+    DATA_KEYS.forEach((k) => { S[k] = []; });
+  }
+  function restoreRealData() {
+    const back = JSON.parse(S.saved || '{}');
+    DATA_KEYS.forEach((k) => { S[k] = Array.isArray(back[k]) ? back[k] : []; });
+    S.saved = null;
+  }
+
+  /* =========================================================
+     7. Clarear o dia e foco
+     ========================================================= */
+  function startClear(onlyOldest) {
+    let q = novos().sort((a, b) => ageOf(b) - ageOf(a));
+    if (onlyOldest) q = q.slice(0, 3);
+    S.ringFrom = dayPct();
+    S.clear = { queue: q.map((i) => i.id), idx: 0, hist: [], stats: { org: 0, res: 0, solto: 0 }, adding: null, sel: null, sug: null };
+    loadSel();
+    S.screen = 'clarear';
+  }
+  const curItem = () => S.clear && byId(S.clear.queue[S.clear.idx]);
+  function loadSel() {
+    const it = curItem();
+    if (!it) return;
+    const s = suggest(it.text);
+    S.clear.sug = s;
+    S.clear.sel = { type: s.type, person: s.person, tema: s.tema };
+    S.clear.adding = null;
+  }
+  function finishItem(apply, statKey) {
+    const it = curItem();
+    if (!it) return;
+    S.clear.hist.push({ id: it.id, snap: Object.assign({}, it), k: statKey });
+    apply(it);
+    S.clear.stats[statKey]++;
+    S.clear.idx++;
+    if (S.clear.idx >= S.clear.queue.length) enterFoco();
+    else loadSel();
+  }
+  const score = (i) => ageOf(i) + (i.type === 'retomar' ? 2 : 0);
+  const bySuggestion = (list) => list.slice().sort((a, b) => score(b) - score(a));
+  function focusList() {
+    const vis = visiveis();
+    const chosen = vis.filter((i) => i.focus);
+    if (chosen.length) return { list: bySuggestion(chosen), chosen: true };
+    return { list: bySuggestion(vis).slice(0, 3), chosen: false };
+  }
+  function setFocus(ids) { abertos().forEach((i) => { i.focus = ids.includes(i.id); }); }
+  function enterFoco() {
+    const c = visiveis();
+    if (!c.length) { S.screen = 'resumo'; return; }
+    const chosen = c.filter((i) => i.focus).map((i) => i.id);
+    S.pick = chosen.length ? chosen : bySuggestion(c).slice(0, 3).map((i) => i.id);
+    S.screen = 'foco';
+  }
+
+  /* =========================================================
+     8. Textos prontos (pauta, resumo) e observações
+     ========================================================= */
+  function pautaText(person) {
+    const its = abertos().filter((i) => norm(i.person) === norm(person)).sort((a, b) => ageOf(b) - ageOf(a));
+    const lines = its.map((i) => `• ${i.type ? typeLabel(i.type) + ': ' : ''}${i.text} (${ageText(ageOf(i))})`);
+    return `Pauta com ${person} (${dateShort()})\n\n${lines.join('\n') || 'Nada em aberto com essa pessoa.'}`;
+  }
+  function semanaText() {
+    const desde = addDays(today(), -6);
+    const groups = {};
+    const put = (tema, key, txt) => { const g = (groups[tema || 'Sem tema'] = groups[tema || 'Sem tema'] || { r: [], t: [], s: [] }); g[key].push(txt); };
+    S.items.forEach((i) => {
+      if (i.status === 'resolvido' && i.doneDate >= desde) put(i.tema, 'r', i.text);
+      else if (i.status === 'tarefa' && i.doneDate >= desde) put(i.tema, 't', i.text);
+      else if (i.status === 'aberto') put(i.tema, 's', `${i.text} (${ageText(ageOf(i))})`);
+    });
+    const names = Object.keys(groups).sort((a, b) => (a === 'Sem tema') - (b === 'Sem tema') || a.localeCompare(b));
+    const block = (title, arr) => (arr.length ? `  ${title}:\n${arr.map((x) => `   • ${x}`).join('\n')}\n` : '');
+    const body = names.map((n) => `${n}\n${block('Resolvidos', groups[n].r)}${block('Viraram tarefa', groups[n].t)}${block('Seguindo', groups[n].s)}`).join('\n');
+    return `Resumo da semana (${dateShort(desde)} a ${dateShort()})\n\n${body || 'Nada registrado ainda nesta semana.'}`;
+  }
+  function observation() {
+    const per = {};
+    visiveis().forEach((i) => { if (i.person) (per[i.person] = per[i.person] || []).push(i); });
+    for (const p of Object.keys(per)) {
+      const old = per[p].filter((i) => ageOf(i) >= 4);
+      if (old.length >= 2) {
+        const min = Math.min(...old.map(ageOf));
+        return { text: `Notei que ${old.length} assuntos com ${p} seguem há pelo menos ${min} dias. Que tal juntar tudo numa mensagem só?`, person: p };
+      }
+    }
+    const old = visiveis().filter((i) => ageOf(i) >= 7).sort((a, b) => ageOf(b) - ageOf(a))[0];
+    if (old) return { text: `Notei que “${old.text}” está aqui ${ageText(ageOf(old))}. Ainda faz sentido manter?`, person: '' };
+    return null;
+  }
+
+  /* =========================================================
+     9. Telas do primeiro acesso
+     ========================================================= */
+  const backBtn = (to) => `<button class="icon-btn" data-act="go" data-to="${to}" aria-label="Voltar">${IC.back}</button>`;
+  const stepper = (n, back) => `<div class="row">${backBtn(back)}<div class="steps" aria-hidden="true">${[1, 2, 3, 4].map((k) => `<span class="${k <= n ? 'on' : ''}"></span>`).join('')}</div><span class="small muted">${n} de 4</span></div>`;
+
+  function scrBoasVindas() {
+    return `<div class="hero">${logo(128)}<div class="wordmark">clarea</div></div>
+      <div class="stack-s" style="padding-top:12px"><h1 class="big">Escreva como pensa.</h1><p class="lead">A gente organiza no fim do dia.</p></div>
+      <p class="row small muted" style="gap:6px">${IC.lock}Seus dados ficam só neste aparelho. Só você vê o que anota.</p>
+      <div class="grow"></div>
+      <div class="stack-s"><button class="btn btn-primary" data-act="go" data-to="nome">Começar</button>
+        <button class="link" data-act="import" style="align-self:center">Já usei antes: restaurar uma cópia</button></div>`;
+  }
+  function scrNome() {
+    return `${stepper(1, 'boas-vindas')}
+      <div class="stack-s"><h1>Como podemos te chamar?</h1><p class="lead">É assim que o Clarea vai falar com você.</p></div>
+      <div class="stack-s"><label for="nome" class="label">Nome ou apelido</label>
+        <input id="nome" value="${esc(S.name)}" autocomplete="given-name" style="font-size:22px;font-weight:700;border-color:var(--ring)"></div>
+      <div class="soft row" style="align-items:flex-start">${logo(32, true)}<p>${greeting()}, <strong id="nome-preview">${esc(S.name || 'você')}</strong>. É assim que o seu Hoje vai começar.</p></div>
+      <div class="grow"></div>
+      <button class="btn btn-primary" data-act="nome-ok">Continuar</button>`;
+  }
+  function scrRitmo() {
+    const horas = ['17:00', '17:30', '18:00', '18:30', '19:00'];
+    const outro = S.otherHora || !horas.includes(S.hora);
+    return `${stepper(2, 'nome')}
+      <div class="stack-s"><h1>Quando você quer clarear o dia?</h1><p class="lead">São 2 minutos para organizar o que você anotou. O fim do expediente costuma funcionar bem.</p></div>
+      <div class="grid3">${horas.map((h) => `<button class="tog" data-act="hora" data-val="${h}" aria-pressed="${S.hora === h && !outro}">${horaLabel(h)}</button>`).join('')}
+        <button class="tog" data-act="hora-outro" aria-pressed="${outro}">Outro</button></div>
+      ${outro ? `<div><label for="hora-in" class="sr">Outro horário</label><input id="hora-in" type="time" value="${S.hora}"></div>` : ''}
+      <div class="stack-s"><strong style="font-size:18px">Em quais dias você trabalha?</strong>
+        <div class="grid7">${['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map((d, k) => `<button class="tog day" data-act="dia" data-k="${k}" aria-pressed="${S.dias[k]}" aria-label="${d}">${d[0]}</button>`).join('')}</div>
+        <p class="small muted">Nos outros dias, o Clarea fica quieto.</p></div>
+      <div class="grow"></div>
+      <button class="btn btn-primary" data-act="go" data-to="atrapalha">Continuar</button>`;
+  }
+  const ATRAPALHA = ['Esquecer o que combinei com alguém', 'Começar uma tarefa', 'Muita coisa ao mesmo tempo', 'Perder a noção do tempo', 'Lembrar de prazos'];
+  function scrAtrapalha() {
+    return `${stepper(3, 'ritmo')}
+      <div class="stack-s"><span class="tp fazer" style="align-self:flex-start">Opcional</span><h1>O que mais te atrapalha no dia a dia?</h1>
+        <p class="muted">Escolha quantas quiser. Isso ajuda o Clarea a te dar dicas que fazem sentido para você.</p></div>
+      <div class="stack-s">${ATRAPALHA.map((t, k) => { const on = S.atrapalha.includes(k); return `<button class="opt" data-act="atr" data-k="${k}" aria-pressed="${on}"><span class="check">${on ? IC.tick : ''}</span>${t}</button>`; }).join('')}</div>
+      <div class="grow"></div>
+      <div class="stack-s"><button class="btn btn-primary" data-act="go" data-to="lembrete">Continuar</button>
+        <button class="link" data-act="atr-skip" style="align-self:center">Pular esta pergunta</button></div>`;
+  }
+  function scrLembrete() {
+    const dias = ['seg', 'ter', 'qua', 'qui', 'sex', 'sáb', 'dom'].filter((d, k) => S.dias[k]);
+    return `${stepper(4, 'atrapalha')}
+      <div class="stack-s"><h1>Um lembrete por dia, e só</h1><p class="lead">Às ${horaLabel(S.hora)}${dias.length ? ` (${dias.join(', ')})` : ''}, o Clarea lembra de clarear o dia. Nada de cobranças ao longo do dia.</p></div>
+      <div class="soft stack-s center" style="padding:24px 16px;border-radius:28px">
+        <div class="notif"><span style="width:40px;height:40px;border-radius:10px;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-shrink:0">${logo(28, true)}</span>
+          <div class="grow stack-s" style="gap:2px"><div class="row between xs muted"><strong style="color:var(--text)">Clarea</strong><span>${S.hora}</span></div>
+            <strong>Hora de clarear o dia</strong><span class="small muted">Você anotou 7 assuntos hoje. Leva uns 2 minutos.</span></div></div>
+        <span class="xs muted">Exemplo de como o lembrete aparece</span></div>
+      <p class="xs muted">O lembrete funciona com o Clarea instalado na tela inicial e aberto há pouco tempo. Mesmo sem ele, o Hoje sempre mostra quando há anotações para clarear.</p>
+      <div class="grow"></div>
+      <div class="stack-s"><button class="btn btn-primary" data-act="lembrete" data-val="1">Ativar lembrete</button>
+        <button class="link" data-act="lembrete" data-val="0" style="align-self:center">Agora não</button></div>`;
+  }
+  function scrConvite() {
+    return `<div class="stack-s" style="padding-top:24px">${logo(56, true)}
+        ${S.welcomed ? '' : `<p class="lead">Tudo pronto${S.name ? ', ' + esc(S.name) : ''}.</p>`}
+        <h1>Como você prefere conhecer o Clarea?</h1></div>
+      <button class="choice rec" data-act="tour-start">
+        <span class="row between"><strong>Aprender usando</strong><span class="tp esperando">2 min</span></span>
+        <span class="small" style="color:var(--primary);font-weight:700">Recomendado se você já tem algo na cabeça agora</span>
+        <span class="muted">Você anota um assunto seu, de verdade, e a gente organiza junto, passo a passo.</span></button>
+      <button class="choice" data-act="tour-ver">
+        <span class="row between"><strong>Só ver como funciona</strong><span class="tp fazer">1 min</span></span>
+        <span class="small muted" style="font-weight:700">Sem precisar anotar nada</span>
+        <span class="muted">Mostramos o app com um exemplo inventado. No fim, o exemplo some e o app fica limpo para você.</span></button>
+      <div class="grow"></div>
+      <div class="stack-s"><button class="link" data-act="tour-skip" style="align-self:center">Pular e começar agora</button>
+        <p class="xs muted center">Dá para rever quando quiser em Perfil › Ajuda.</p></div>`;
+  }
+  const VER = [
+    ['Anotar', 'Durante o dia, você escreve uma linha por assunto, do jeito que vier. Sem tipo, sem prazo, sem pensar.'],
+    ['Clarear o dia', 'No fim do dia, um assunto por vez. O Clarea sugere tipo, pessoa e tema; você só confirma ou corrige.'],
+    ['Escolher o foco', 'Você escolhe até 3 assuntos para o dia seguinte. As sugestões já vêm marcadas.'],
+    ['Seu Hoje', 'O anel mostra o quanto o dia clareou, o foco fica no alto e as ações estão a um toque. Nas suas iniciais ficam as configurações.']
+  ];
+  function verBalloon() {
+    if (!S.ver) return '';
+    const [t, d] = VER[S.ver - 1];
+    return `<div class="balloon dark ver-b"><div class="row between"><span class="step">${S.ver} de 4 · exemplo inventado</span><button class="link" data-act="ver-end" style="min-height:32px;color:var(--balloon-accent)">Pular</button></div>
+      <p class="b-title">${t}</p><p class="muted">${d}</p>
+      <button class="btn-s primary" data-act="${S.ver < 4 ? 'ver-next' : 'ver-end'}" style="align-self:flex-end">${S.ver < 4 ? 'Próximo' : 'Começar a usar'}</button></div>`;
+  }
+  function verGo() {
+    if (S.ver === 1) S.screen = 'anotar';
+    if (S.ver === 2) startClear(false);
+    if (S.ver === 3) enterFoco();
+    if (S.ver === 4) { S.sheet = null; S.screen = 'hoje'; }
+    render();
+    document.getElementById('main').scrollTop = 0;
+  }
+
+  /* =========================================================
+     10. Dicas da primeira vez e aviso de demonstração
+     ========================================================= */
+  const TIPS = {
+    anotar: 'Escreva uma linha por assunto, do jeito que vier. Não precisa classificar nada agora: isso fica para o Clarear o dia.',
+    'clear-intro': 'Aqui você organiza o que anotou: um assunto por vez, com sugestões prontas. Nada é obrigatório.',
+    hoje: 'Este é o seu Hoje. Toque num assunto do foco para ver as ações. Em “Mudar”, você troca o foco quando quiser.',
+    historico: 'Tudo o que passou pelo Clarea fica aqui. Em “Números”, você vê o que costuma demorar mais.'
+  };
+  function tipCard(key) {
+    if (S.tips[key] || S.tour || S.ver || S.demo || !TIPS[key]) return '';
+    return `<div class="soft tip"><span style="color:var(--primary);flex-shrink:0">${IC.light}</span><div class="stack-s grow"><p>${TIPS[key]}</p><button class="link" data-act="tip-ok" data-key="${key}" style="align-self:flex-start;min-height:32px">Entendi</button></div></div>`;
+  }
+  const demoBar = () => (S.demo ? `<div class="soft demo-bar row between" style="padding:12px 14px"><span class="small"><strong>Demonstração.</strong> Dados inventados, nada é salvo.</span><button class="btn-s primary" data-act="demo-end">Sair</button></div>` : '');
+
+  /* =========================================================
+     11. Anotar
+     ========================================================= */
+  const highlight = (t) => esc(t).replace(/@([\p{L}]+)/gu, '<span class="mention">@$1</span>').replace(/#([\p{L}\d]+)/gu, '<span class="hash">#$1</span>');
+  function lineRow(i) {
+    if (S.editing === i.id) {
+      return `<li><form class="edit" id="edit-form" data-id="${i.id}"><label for="edit-input" class="sr">Editar anotação</label>
+        <input id="edit-input" value="${esc(i.text)}" autocomplete="off">
+        <div class="row" style="justify-content:flex-end"><button type="button" class="btn-s" data-act="edit-del" data-id="${i.id}">Apagar</button><button type="button" class="btn-s" data-act="edit-cancel">Cancelar</button><button type="submit" class="btn-s primary">Salvar</button></div></form></li>`;
+    }
+    const a = ageOf(i);
+    return `<li><button class="line" data-act="edit" data-id="${i.id}"><span>${highlight(i.text)}</span>${a > 0 ? ageTag(i) : ''}</button></li>`;
+  }
+  function tourBalloon1() {
+    const n = novos().length;
+    return `<div class="balloon"><div class="row between"><span class="step">Passo 1 de 3</span><button class="link" data-act="tour-skip" style="min-height:32px">Pular</button></div>
+      ${n ? `<p class="b-title">Pronto! Pode anotar mais, do jeito que vier.</p><p class="muted">Cada linha é um assunto. Quando quiser, siga para clarear.</p>
+        <button class="btn-s primary" data-act="tour-2" style="align-self:flex-end">Próximo</button>`
+        : `<p class="b-title">Anote a primeira coisa que está na sua cabeça agora.</p><p class="muted">Sem pensar em tipo, pessoa ou prazo. Escreva aqui embaixo e aperte Enter.</p>`}</div>`;
+  }
+  const meBtn = () => `<button class="me" data-act="go" data-to="perfil" aria-label="Perfil e configurações">${esc(myInitial())}</button>`;
+  function scrAnotar() {
+    const ns = novos(), old = visiveis();
+    return `${demoBar()}<header class="row between"><div class="stack-s" style="gap:2px"><span class="small muted">${dateLong()}</span><h1>Anotar</h1></div>${meBtn()}</header>
+      ${tipCard('anotar')}
+      ${S.tour === 1 ? '' : `<div class="chips"><span class="pill on">${plural(ns.length, 'assunto', 'assuntos')} para clarear</span><span class="pill">Clarear o dia às ${horaLabel(S.hora)}</span></div>
+      ${ns.length ? `<button class="btn btn-primary" data-act="clear-intro">Clarear o dia agora</button>` : ''}
+      ${old.length ? `<button class="fold" data-act="toggle-old" aria-expanded="${S.showOld}"><span>Seguindo de dias anteriores (${old.length})</span>${IC.chev}</button>
+        ${S.showOld ? `<ul class="quiet-list">${old.map((i) => `<li><span>${esc(i.text)}</span>${ageTag(i)}</li>`).join('')}</ul>` : ''}` : ''}`}
+      ${ns.length ? `<ul class="lines">${ns.map(lineRow).join('')}</ul>${S.tour === 1 ? '' : '<p class="xs muted">Toque numa linha para editar ou apagar.</p>'}`
+        : `<div class="empty"><p>Nada anotado por enquanto.</p><p class="small muted">Uma linha por assunto, do jeito que vier na cabeça.</p></div>`}
+      ${S.tour === 1 ? tourBalloon1() : ''}`;
+  }
+  const dockAnotar = () => `<form class="composer" id="composer"><label for="new-line" class="sr">Nova anotação</label><input id="new-line" autocomplete="off" placeholder="Escreva e aperte Enter" enterkeyhint="send"><button type="submit" class="send" aria-label="Guardar anotação">${IC.send}</button></form>
+      <p class="hint">Salvo na hora · use @ para pessoa e # para tema, se quiser</p>`;
+
+  /* =========================================================
+     12. Clarear o dia (telas)
+     ========================================================= */
+  function scrClearIntro() {
+    const n = novos().length;
+    const close = `<button class="icon-btn" data-act="go" data-to="anotar" aria-label="Voltar para Anotar">${IC.x}</button>`;
+    if (!n) return `${demoBar()}<header class="row between"><h1>Clarear o dia</h1>${close}</header><div class="empty"><p>Nada para clarear agora.</p><p class="small muted">Anote o que aparecer durante o dia e volte aqui no fim da tarde.</p></div>`;
+    return `${demoBar()}<header class="row between"><h1>Clarear o dia</h1>${close}</header>
+      ${tipCard('clear-intro')}
+      <div class="soft stack-s"><p style="font-size:18px;font-weight:700">Organize o que você anotou. Leva 2 minutos.</p>
+        <p class="muted">Você tem ${plural(n, 'anotação', 'anotações')}. Uma por vez: confirme a sugestão ou corrija com um toque.</p></div>
+      ${n > 8 ? `<button class="btn btn-primary" data-act="clear-start" data-mode="3">Clarear só as 3 mais antigas</button>
+           <button class="btn" data-act="clear-start">Clarear todas (${n})</button>
+           <p class="small muted">Tudo bem ter acumulado. O resto continua aqui para outro momento.</p>`
+        : `<button class="btn btn-primary" data-act="clear-start">Começar</button>`}`;
+  }
+  const uniq = (list) => { const seen = new Set(); return list.filter((x) => x && !seen.has(norm(x)) && seen.add(norm(x))); };
+  function chipBtn(act, field, val, label, on, sug, withAva) {
+    return `<button class="chip ${withAva ? 'has-ava' : ''}" aria-pressed="${on}" data-act="${act}" data-field="${field}" data-val="${esc(val)}">${withAva ? ava(val) : ''}${esc(label)}${on && sug ? ' · sugerido' : ''}</button>`;
+  }
+  const addFormHtml = (f, formId) => `<form class="add-form" id="${formId}" data-field="${f}"><label for="${formId}-in" class="sr">${f === 'person' ? 'Nome da pessoa' : 'Nome do tema'}</label><input id="${formId}-in" autocomplete="off" placeholder="${f === 'person' ? 'Nome da pessoa' : 'Nome do tema'}"><button class="btn-s primary" type="submit">Usar</button></form>`;
+  function scrClear() {
+    const c = S.clear, it = curItem();
+    if (!it) { enterFoco(); return SCREENS[S.screen](); }
+    const total = c.queue.length;
+    const mins = Math.max(1, Math.ceil(((total - c.idx) * 15) / 60));
+    const people = uniq([c.sel.person, c.sug.person].concat(S.people)).slice(0, 4);
+    const temas = uniq([c.sel.tema, c.sug.tema].concat(activeTemas())).slice(0, 3);
+    const showTema = activeTemas().length || c.sug.tema || c.sel.tema || c.adding === 'tema';
+    const ch = (f, v, l, a) => chipBtn('pick', f, v, l, norm(c.sel[f]) === norm(v), v && norm(c.sug[f]) === norm(v), a);
+    const balloon = S.tour === 2 ? `<div class="balloon"><div class="row between"><span class="step">Passo 2 de 3</span><button class="link" data-act="tour-skip" style="min-height:32px">Pular</button></div>
+        <p class="b-title">No fim do dia, você clareia.</p><p class="muted">O Clarea já sugere o tipo e a pessoa. Você confirma, ou corrige com um toque.</p></div>` : '';
+    return `${demoBar()}<header class="row between"><h1>Clarear o dia</h1><button class="icon-btn" data-act="clear-exit" aria-label="Sair e continuar depois">${IC.x}</button></header>
+      <div class="stack-s"><div class="row between small muted"><span>${c.idx + 1} de ${total}</span><span>cerca de ${mins} min restante${mins > 1 ? 's' : ''}</span></div>
+        <div class="bar" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${c.idx}"><span style="width:${Math.round((c.idx / total) * 100)}%"></span></div></div>
+      ${balloon}
+      <div class="clear-wrap ${S.tour === 2 ? 'tour-focus' : ''}">
+        <div class="clear-card">
+          <p class="clear-text">${highlight(it.text)}</p>
+          <div class="stack-s"><span class="label">Tipo</span><div class="chips">${TYPES.map(([k, l]) => ch('type', k, l)).join('')}</div></div>
+          <div class="stack-s"><span class="label">Pessoa</span><div class="chips">${people.map((p) => ch('person', p, p, true)).join('')}${c.adding === 'person' ? '' : '<button class="chip add" data-act="add" data-field="person">+ Outra</button>'}</div>${c.adding === 'person' ? addFormHtml('person', 'add-form') : ''}</div>
+          ${showTema ? `<div class="stack-s"><span class="label">Tema</span><div class="chips">${temas.map((p) => ch('tema', p, p)).join('')}${c.adding === 'tema' ? '' : '<button class="chip add" data-act="add" data-field="tema">+ Outro</button>'}</div>${c.adding === 'tema' ? addFormHtml('tema', 'add-form') : ''}</div>`
+            : `<button class="link quiet" data-act="add" data-field="tema" style="align-self:flex-start;min-height:32px">+ Adicionar um tema</button>`}
+          <p class="why">${esc(c.sug.why)}</p>
+        </div>
+        <div class="two"><button class="btn good-text" data-act="clear-res">Já resolvi</button><button class="btn muted" data-act="clear-solto">Deixar pra lá</button></div>
+        <button class="btn btn-primary" data-act="clear-ok">Confirmar e próximo</button>
+        <div class="row between"><button class="link quiet" data-act="clear-undo" ${c.hist.length ? '' : 'disabled'}>Desfazer anterior</button><button class="link quiet" data-act="clear-skip">Pular este</button></div>
+      </div>`;
+  }
+  function pickerList() {
+    return `<div class="stack-s">${bySuggestion(visiveis()).map((i) => { const on = S.pick.includes(i.id); return `<button class="opt" data-act="pick-foco" data-id="${i.id}" aria-pressed="${on}"><span class="check">${on ? IC.tick : ''}</span>
+      <span class="stack-s" style="gap:4px;min-width:0;padding:10px 0"><span>${esc(i.text)}</span><span class="meta" style="font-weight:400">${tp(i.type)}${i.person ? `<span>${esc(i.person)}</span>` : ''}${ageTag(i)}</span></span></button>`; }).join('')}</div>`;
+  }
+  function scrFoco() {
+    return `${demoBar()}<div class="stack-s"><span class="label">Último passo</span><h1>Escolha o foco de amanhã</h1>
+        <p class="muted">Até 3 assuntos. Já deixamos marcadas as sugestões: os mais antigos e o que precisa ser retomado. Troque com um toque.</p></div>
+      <p class="small"><strong>${S.pick.length} de 3</strong> escolhidos</p>
+      ${pickerList()}
+      <div class="grow"></div>
+      <div class="stack-s"><button class="btn btn-primary" data-act="foco-ok">Confirmar foco</button>
+        <button class="link quiet" data-act="foco-skip" style="align-self:center">Pular e usar as sugestões</button></div>`;
+  }
+  function scrResumo() {
+    const st = S.clear ? S.clear.stats : { org: 0, res: 0, solto: 0 };
+    const seg = abertos().length, restam = novos().length;
+    const nf = visiveis().filter((i) => i.focus).length;
+    return `${demoBar()}<section class="stack center" style="padding-top:40px">
+        ${lens(150, S.ringFrom, 'ring-resumo')}
+        <h1 class="big">Dia clareado.</h1>
+        <p class="lead">${plural(st.org, 'organizado', 'organizados')} · ${plural(st.res, 'resolvido', 'resolvidos')} · ${st.solto} deixado${st.solto === 1 ? '' : 's'} pra lá</p>
+        <p class="muted">${nf ? `Amanhã começa com ${plural(nf, 'assunto', 'assuntos')} no foco, ${nf === 1 ? 'escolhido' : 'escolhidos'} por você.` : `Amanhã começa com ${plural(seg, 'assunto', 'assuntos')} seguindo.`}${restam ? ` ${plural(restam, 'anotação ficou', 'anotações ficaram')} para outro momento.` : ''}</p></section>
+      <div class="grow"></div>
+      <button class="btn btn-primary" data-act="resumo-ok">Ver meu Hoje</button>`;
+  }
+
+  /* =========================================================
+     13. Hoje
+     ========================================================= */
+  function actionsFor(i) {
+    return `<div class="actions"><button class="act good" data-act="do" data-how="resolvido" data-id="${i.id}">Resolvido</button>
+      <button class="act" data-act="do" data-how="tarefa" data-id="${i.id}">Virar tarefa</button>
+      <button class="act" data-act="do" data-how="amanha" data-id="${i.id}">Amanhã</button>
+      <button class="act soft" data-act="do" data-how="solto" data-id="${i.id}">Deixar pra lá</button></div>
+      <div style="padding:0 16px 12px"><button class="link quiet" data-act="item-edit" data-id="${i.id}" style="min-height:36px;font-size:14px">Editar tipo, pessoa ou tema</button></div>`;
+  }
+  function itemCard(i) {
+    const open = S.expanded === i.id;
+    return `<li class="card focus"><button class="focus-head" data-act="expand" data-id="${i.id}" aria-expanded="${open}">${ava(i.person)}
+        <span class="stack-s" style="gap:6px;min-width:0"><span class="focus-text">${esc(i.text)}</span><span class="meta">${tp(i.type)}${ageTag(i)}${i.tema ? `<span>${esc(i.tema)}</span>` : ''}</span></span></button>
+      ${open ? actionsFor(i) : ''}</li>`;
+  }
+  function backupNudge() {
+    if (S.demo || S.items.length < 5) return '';
+    const last = S.lastBackup;
+    const dias = last ? diffDays(last, today()) : null;
+    if (dias !== null && dias <= 7) return '';
+    return `<div class="card row" style="align-items:flex-start"><div class="stack-s grow"><p class="small">${last ? `Faz ${dias} dias desde a sua última cópia de segurança.` : 'Você ainda não salvou uma cópia de segurança.'} Seus dados ficam só neste aparelho.</p>
+      <button class="btn-s primary" data-act="export" style="align-self:flex-start">Salvar uma cópia</button></div></div>`;
+  }
+  function scrHoje() {
+    const vis = visiveis(), F = focusList(), foco = F.list, done = doneToday(), pct = dayPct();
+    if (S.expanded !== '__none' && !foco.some((i) => i.id === S.expanded)) S.expanded = foco[0] ? foco[0].id : null;
+    const obs = observation(), ns = novos().length, gd = guardados().length;
+    const per = {};
+    vis.forEach((i) => { if (i.person) per[i.person] = (per[i.person] || 0) + 1; });
+    const semPessoa = vis.filter((i) => !i.person).length;
+    const title = !done && !vis.length ? 'Seu dia está começando' : !done ? 'Comece pelo foco' : pct >= 1 ? 'Dia claro' : 'Seu dia está clareando';
+    const sub = !done && !vis.length ? 'Nada pedindo atenção. Toque em Anotar quando algo aparecer.' : `${plural(done, 'resolvido', 'resolvidos')} hoje. ${vis.length ? `${plural(foco.length, 'assunto pede', 'assuntos pedem')} sua atenção.` : 'Nada mais pedindo atenção.'}`;
+    const tour3 = S.tour === 3 ? `<div class="balloon dark"><span class="step">Passo 3 de 3</span><p class="b-title">Este é o seu Hoje.</p>
+        <p class="muted">O anel mostra o quanto o dia já clareou. No foco ficam os assuntos que você escolheu, com ações em um toque, e dá para mudar quando quiser. Nas suas iniciais, lá em cima, ficam as configurações.</p>
+        <button class="btn-s primary" data-act="tour-end" style="align-self:flex-end">Concluir</button></div>` : '';
+    const quiet = S.tour === 3 || S.ver;
+    const doneTasks = S.tasks.filter((t) => t.done).length;
+    return `${demoBar()}<header class="row between"><div class="stack-s" style="gap:2px"><span class="small muted">${dateLong()}</span><h1>${greeting()}${S.name ? ', ' + esc(S.name) : ''}</h1></div>
+        <button class="me ${S.tour === 3 ? 'glow' : ''}" data-act="go" data-to="perfil" aria-label="Perfil e configurações">${esc(myInitial())}</button></header>
+      ${tipCard('hoje')}
+      <div class="lens-card">${lens(108, pct)}<div class="stack-s" style="gap:6px;min-width:0"><div class="lens-title">${title}</div><p class="small muted">${sub}</p></div></div>
+      ${ns && !quiet ? `<div class="soft stack-s"><p>Você tem ${plural(ns, 'anotação', 'anotações')} para clarear.</p><button class="btn-s primary" data-act="clear-intro" style="align-self:flex-start">Clarear o dia</button></div>` : ''}
+      ${obs && !quiet ? `<div class="soft row" style="align-items:flex-start">${obs.person ? ava(obs.person) : logo(32, true)}<div class="stack-s"><p>${esc(obs.text)}</p>${obs.person ? `<button class="btn-s primary" data-act="sheet" data-kind="pauta" data-person="${esc(obs.person)}" style="align-self:flex-start">Pauta com ${esc(obs.person)}</button>` : ''}</div></div>` : ''}
+      ${tour3}
+      ${foco.length ? `<div class="row between"><span class="row" style="gap:8px"><span class="label">Foco de hoje</span><span class="tp ${F.chosen ? 'esperando' : 'fazer'}" style="font-size:12px">${F.chosen ? 'escolhido por você' : 'sugerido'}</span></span><button class="link" data-act="foco-open" style="min-height:36px">Mudar</button></div>
+        <ul class="focus-list">${foco.map(itemCard).join('')}</ul>` : ''}
+      ${gd ? `<p class="small muted">${plural(gd, 'assunto guardado', 'assuntos guardados')} para amanhã.</p>` : ''}
+      ${Object.keys(per).length || semPessoa ? `<span class="label">Por pessoa</span><div class="people">
+        ${Object.keys(per).sort((a, b) => per[b] - per[a]).map((p) => `<button class="person" data-act="sheet" data-kind="pauta" data-person="${esc(p)}">${ava(p, true)}<span>${esc(p)} · ${per[p]}</span></button>`).join('')}
+        ${semPessoa ? `<button class="person" data-act="sheet" data-kind="sempessoa"><span class="ava lg none" style="border-radius:50%">·</span><span>Só você · ${semPessoa}</span></button>` : ''}</div>` : ''}
+      ${S.tasks.length ? `<div class="row between"><span class="label">Tarefas</span>${doneTasks ? `<button class="link quiet" data-act="tasks-clean" style="min-height:36px">Limpar concluídas (${doneTasks})</button>` : ''}</div>
+        <ul class="tasks card" style="padding:4px 16px">${S.tasks.map((t) => `<li class="${t.done ? 'done' : ''}"><label><input type="checkbox" data-task="${t.id}" ${t.done ? 'checked' : ''}><span>${esc(t.text)}</span></label></li>`).join('')}</ul>` : ''}
+      ${quiet ? '' : backupNudge()}
+      ${S.items.length ? `<button class="link" data-act="sheet" data-kind="semana" style="align-self:center">Resumo da semana</button>` : ''}`;
+  }
+
+  /* =========================================================
+     14. Histórico e números
+     ========================================================= */
+  const STATUS = { novo: ['Para clarear', ''], aberto: ['Seguindo', 'seg'], resolvido: ['Resolvido', 'res'], tarefa: ['Virou tarefa', ''], solto: ['Deixado pra lá', ''] };
+  function histList() {
+    const q = norm(S.q);
+    const list = S.items.filter((i) => !q || norm([i.text, i.person, i.tema, typeLabel(i.type)].join(' ')).includes(q)).sort((a, b) => (b.created > a.created ? 1 : b.created < a.created ? -1 : 0));
+    if (!list.length) return `<div class="empty"><p>${S.items.length ? 'Nada encontrado com essa busca.' : 'O histórico aparece aqui depois das primeiras anotações.'}</p></div>`;
+    return `<ul class="hist">${list.map((i) => {
+      const [lab, cls] = i.status === 'aberto' && isSnoozed(i) ? ['Amanhã', 'seg'] : STATUS[i.status] || ['', ''];
+      const meta = [typeLabel(i.type), i.person, i.tema].filter(Boolean).map(esc);
+      return `<li><span>${esc(i.text)}</span><span class="meta"><span class="st ${cls}">${lab}</span>${meta.join(' · ')}${meta.length ? ' · ' : ''}anotado em ${dateShort(i.created)}</span></li>`;
+    }).join('')}</ul>`;
+  }
+  function avgBy(field) {
+    const g = {};
+    S.items.forEach((i) => {
+      if (!(i.status === 'resolvido' || i.status === 'tarefa') || !i.doneDate || !i[field]) return;
+      const d = Math.max(0, diffDays(i.created, i.doneDate));
+      (g[i[field]] = g[i[field]] || []).push(d);
+    });
+    return Object.keys(g).map((k) => ({ k, avg: g[k].reduce((a, b) => a + b, 0) / g[k].length, n: g[k].length })).sort((a, b) => b.avg - a.avg).slice(0, 6);
+  }
+  function bars(rows, emptyMsg) {
+    if (!rows.length) return `<p class="small muted">${emptyMsg}</p>`;
+    const max = Math.max(1, ...rows.map((r) => r.avg));
+    return `<div class="stack-s">${rows.map((r) => `<div class="hbar"><div class="row between small"><span>${esc(r.k)}</span><span class="muted">${fmt1(r.avg)} ${r.avg === 1 ? 'dia' : 'dias'} · ${plural(r.n, 'item', 'itens')}</span></div><div class="hbar-track"><span style="width:${Math.max(4, Math.round((r.avg / max) * 100))}%"></span></div></div>`).join('')}</div>`;
+  }
+  function numbersHtml() {
+    const desde = addDays(today(), -6);
+    const anot = S.items.filter((i) => i.created >= desde).length;
+    const res = S.items.filter((i) => (i.status === 'resolvido' || i.status === 'tarefa') && i.doneDate >= desde).length;
+    const old = bySuggestion(visiveis()).sort((a, b) => ageOf(b) - ageOf(a)).slice(0, 5);
+    return `<div class="stack-s"><span class="label">Últimos 7 dias</span><div class="stat-row">
+        <div class="stat"><strong>${anot}</strong><span class="xs muted">anotados</span></div>
+        <div class="stat"><strong>${res}</strong><span class="xs muted">resolvidos</span></div>
+        <div class="stat"><strong>${visiveis().length}</strong><span class="xs muted">seguindo</span></div></div></div>
+      <div class="stack-s"><span class="label">Há mais tempo seguindo</span>
+        ${old.length ? `<div class="list-card">${old.map((i) => `<div class="list-row" style="min-height:52px"><span class="small">${esc(i.text)}</span>${ageTag(i)}</div>`).join('')}</div>` : '<p class="small muted">Nada seguindo agora.</p>'}</div>
+      <div class="stack-s"><span class="label">Dias até resolver, por pessoa</span>${bars(avgBy('person'), 'Aparece depois que você resolver assuntos ligados a pessoas.')}</div>
+      <div class="stack-s"><span class="label">Dias até resolver, por tema</span>${bars(avgBy('tema'), 'Aparece depois que você resolver assuntos com tema.')}</div>`;
+  }
+  const scrHistorico = () => `${demoBar()}<header class="row between"><h1>Histórico</h1>${meBtn()}</header>
+      ${tipCard('historico')}
+      <div class="seg" role="group" aria-label="Ver"><button data-act="hist-tab" data-val="lista" aria-pressed="${S.histTab === 'lista'}">Lista</button><button data-act="hist-tab" data-val="numeros" aria-pressed="${S.histTab === 'numeros'}">Números</button></div>
+      ${S.histTab === 'lista' ? `<div><label for="busca" class="sr">Buscar no histórico</label><input id="busca" type="search" placeholder="Buscar por texto, pessoa ou tema" value="${esc(S.q)}" autocomplete="off"></div>
+      <div id="hist-list">${histList()}</div>` : numbersHtml()}`;
+
+  /* =========================================================
+     15. Perfil, pessoas e temas
+     ========================================================= */
+  function scrPerfil() {
+    const th = S.theme;
+    const opt = (v, l, cls) => `<button class="theme-opt" data-act="theme" data-val="${v}" aria-pressed="${th === v}"><span class="mini ${cls}"><i></i><i></i><i></i></span>${l}</button>`;
+    const lastB = S.lastBackup ? `última em ${dateShort(S.lastBackup)}` : 'nenhuma ainda';
+    const notifState = !('Notification' in window) ? 'não disponível neste navegador' : Notification.permission === 'denied' ? 'bloqueado no navegador' : '';
+    return `${demoBar()}<header class="row">${backBtn('hoje')}<h1 style="font-size:22px">Perfil</h1></header>
+      ${S.pendingImport ? importConfirm() : ''}
+      <div class="row"><span class="me" style="width:56px;height:56px;font-size:22px">${esc(myInitial())}</span>
+        <form id="perfil-nome-form" class="grow stack-s" style="gap:4px"><label for="perfil-nome" class="xs muted">Como te chamamos</label><input id="perfil-nome" value="${esc(S.name)}" style="height:44px;font-size:17px;font-weight:700"></form></div>
+      <div class="stack-s"><span class="label">Aparência</span><div class="theme-opts">${opt('light', 'Claro', 'l')}${opt('dark', 'Escuro', 'd')}${opt('system', 'Do aparelho', 's')}</div></div>
+      <div class="stack-s"><span class="label">Seu ritmo</span><div class="list-card">
+        <label class="list-row" for="perfil-hora"><span>Clarear o dia</span><input id="perfil-hora" type="time" value="${S.hora}" style="width:130px;height:44px;font-size:16px;font-weight:700;color:var(--primary)"></label>
+        <div class="stack-s" style="padding:14px 16px"><span>Dias de trabalho</span><div class="grid7">${['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map((d, k) => `<button class="tog day" data-act="dia" data-k="${k}" aria-pressed="${S.dias[k]}" aria-label="${d}" style="min-height:40px">${d[0]}</button>`).join('')}</div></div>
+        <button class="list-row" data-act="lembrete-toggle" aria-pressed="${S.lembrete}"><span class="stack-s" style="gap:0"><span>Lembrete por notificação</span>${notifState ? `<span class="xs muted">${notifState}</span>` : ''}</span><span class="switch ${S.lembrete ? 'on' : ''}" aria-hidden="true"></span></button></div></div>
+      <div class="stack-s"><span class="label">Organização</span><div class="list-card">
+        <button class="list-row" data-act="go" data-to="pessoas"><span>Pessoas e temas</span><span class="small muted">${S.people.length + activeTemas().length}</span></button></div></div>
+      <div class="stack-s"><span class="label">Seus dados</span><div class="list-card">
+        <button class="list-row" data-act="export"><span>Salvar uma cópia</span><span class="small muted">${lastB}</span></button>
+        <button class="list-row" data-act="import">Restaurar uma cópia</button></div>
+        <p class="xs muted">Seus dados ficam só neste aparelho. Uma cópia de vez em quando evita perder tudo se trocar de celular.</p></div>
+      <div class="stack-s"><span class="label">Ajuda</span><div class="list-card">
+        <button class="list-row" data-act="go" data-to="convite">Rever o passeio pelo app</button>
+        <button class="list-row" data-act="tips-reset">Mostrar as dicas de novo</button>
+        <button class="list-row" data-act="demo-start" ${S.demo ? 'disabled' : ''}>Ver demonstração com dados inventados</button></div></div>
+      <button class="link danger" data-act="reset" style="align-self:center">${S.confirmReset ? 'Toque de novo para apagar tudo deste aparelho' : 'Apagar todos os dados deste aparelho'}</button>
+      <p class="foot">Clarea · versão ${VERSAO}</p>`;
+  }
+  function scrPessoas() {
+    const temasAll = S.temas.slice().sort((a, b) => a.localeCompare(b));
+    const countP = (p) => S.items.filter((i) => norm(i.person) === norm(p)).length;
+    const countT = (t) => S.items.filter((i) => norm(i.tema) === norm(t)).length;
+    const personRow = (p) => {
+      if (S.personEdit && S.personEdit.name === p) {
+        const others = S.people.filter((o) => o !== p);
+        return `<div class="stack-s" style="padding:14px 16px"><form id="person-rename" class="stack-s" data-name="${esc(p)}"><label for="person-rename-in" class="xs muted">Novo nome</label><div class="add-form"><input id="person-rename-in" value="${esc(p)}"><button class="btn-s primary" type="submit">Salvar</button></div></form>
+          ${others.length ? `<form id="person-merge" class="stack-s" data-name="${esc(p)}"><label for="person-merge-in" class="xs muted">Ou juntar com outra pessoa (os assuntos de ${esc(p)} passam para ela)</label><div class="add-form"><select id="person-merge-in" style="height:44px;font-size:16px">${others.map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join('')}</select><button class="btn-s" type="submit">Juntar</button></div></form>` : ''}
+          <button class="link quiet" data-act="person-cancel" style="align-self:flex-start">Cancelar</button></div>`;
+      }
+      return `<button class="list-row" data-act="person-edit" data-name="${esc(p)}"><span class="row">${ava(p)}${esc(p)}</span><span class="small muted">${plural(countP(p), 'assunto', 'assuntos')}</span></button>`;
+    };
+    const temaRow = (t) => {
+      const arq = S.temasArq.some((a) => norm(a) === norm(t));
+      if (S.temaEdit === t) {
+        return `<div class="stack-s" style="padding:14px 16px"><form id="tema-rename" class="stack-s" data-name="${esc(t)}"><label for="tema-rename-in" class="xs muted">Novo nome</label><div class="add-form"><input id="tema-rename-in" value="${esc(t)}"><button class="btn-s primary" type="submit">Salvar</button></div></form>
+          <div class="row"><button class="btn-s" data-act="tema-arq" data-name="${esc(t)}">${arq ? 'Reativar tema' : 'Arquivar tema'}</button><button class="link quiet" data-act="tema-cancel">Cancelar</button></div></div>`;
+      }
+      return `<button class="list-row" data-act="tema-edit" data-name="${esc(t)}"><span>${esc(t)}${arq ? ' <span class="st">arquivado</span>' : ''}</span><span class="small muted">${plural(countT(t), 'assunto', 'assuntos')}</span></button>`;
+    };
+    return `${demoBar()}<header class="row">${backBtn('perfil')}<h1 style="font-size:22px">Pessoas e temas</h1></header>
+      <p class="small muted">Eles nascem do que você escreve. Aqui você corrige nomes, junta duplicados e arquiva temas encerrados, sem perder o histórico.</p>
+      <div class="stack-s"><span class="label">Pessoas</span>${S.people.length ? `<div class="list-card">${S.people.slice().sort((a, b) => a.localeCompare(b)).map(personRow).join('')}</div>` : '<p class="small muted">Nenhuma pessoa ainda.</p>'}</div>
+      <div class="stack-s"><span class="label">Temas</span>${temasAll.length ? `<div class="list-card">${temasAll.map(temaRow).join('')}</div>` : '<p class="small muted">Nenhum tema ainda. Use # numa anotação ou “+ Adicionar um tema” no Clarear o dia.</p>'}</div>`;
+  }
+  function renamePerson(from, to) {
+    to = to.trim();
+    if (!to || to === from) return;
+    const existing = S.people.find((p) => norm(p) === norm(to) && p !== from);
+    S.items.forEach((i) => { if (i.person === from) i.person = existing || to; });
+    S.people = S.people.filter((p) => p !== from);
+    if (!existing) S.people.push(to);
+  }
+  function renameTema(from, to) {
+    to = to.trim();
+    if (!to || to === from) return;
+    const existing = S.temas.find((p) => norm(p) === norm(to) && p !== from);
+    S.items.forEach((i) => { if (i.tema === from) i.tema = existing || to; });
+    S.temas = S.temas.filter((p) => p !== from);
+    if (!existing) S.temas.push(to);
+    S.temasArq = S.temasArq.map((a) => (a === from ? existing || to : a));
+  }
+
+  /* =========================================================
+     16. Cópia de segurança
+     ========================================================= */
+  function exportBackup() {
+    const data = JSON.stringify(snapshot(), null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `clarea-copia-${today()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+    if (!S.demo) { S.lastBackup = today(); persist(); }
+    toast('Cópia salva. Guarde o arquivo num lugar seguro, como o seu e-mail ou nuvem.');
+    render();
+  }
+  function importConfirm() {
+    const p = S.pendingImport;
+    const n = (p.items || []).length;
+    return `<div class="card stack-s" style="border-color:var(--primary)"><p><strong>Restaurar esta cópia?</strong></p>
+      <p class="small muted">Cópia de ${p.savedAt ? new Date(p.savedAt).toLocaleDateString('pt-BR') : 'data desconhecida'}, com ${plural(n, 'assunto', 'assuntos')}. Isso substitui o que está neste aparelho.</p>
+      <div class="row"><button class="btn-s primary" data-act="import-ok">Restaurar</button><button class="btn-s" data-act="import-cancel">Cancelar</button></div></div>`;
+  }
+  function onImportFile(file) {
+    const r = new FileReader();
+    r.onload = () => {
+      let obj = null;
+      try { obj = JSON.parse(r.result); } catch (e) { obj = null; }
+      if (!obj || obj.app !== 'clarea' || !Array.isArray(obj.items)) { toast('Esse arquivo não parece ser uma cópia do Clarea.'); return; }
+      if (!S.onboarded && !S.items.length) { applyImport(obj); return; }
+      S.pendingImport = obj; S.screen = 'perfil'; render(); document.getElementById('main').scrollTop = 0;
+    };
+    r.readAsText(file);
+  }
+  function applyImport(obj) {
+    const theme = S.theme;
+    S = Object.assign(fresh(), { theme });
+    applyData(obj);
+    S.onboarded = true; S.welcomed = true;
+    persist();
+    go('hoje');
+    toast(`Cópia restaurada: ${plural(S.items.length, 'assunto', 'assuntos')}.`);
+  }
+
+  /* =========================================================
+     17. Lembrete do Clarear o dia
+     ========================================================= */
+  async function notify(title, body) {
+    try {
+      if (!('Notification' in window) || Notification.permission !== 'granted') return;
+      const reg = navigator.serviceWorker ? await navigator.serviceWorker.getRegistration() : null;
+      if (reg) reg.showNotification(title, { body, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', tag: 'clarear-o-dia' });
+      else new Notification(title, { body, icon: 'icons/icon-192.png' });
+    } catch (e) { /* sem notificação, o Hoje continua avisando */ }
+  }
+  function checkReminder() {
+    if (!S.onboarded || !S.lembrete || S.demo || S.ver) return;
+    const now = new Date(), t = today();
+    if (S.lastNotified === t) return;
+    if (!S.dias[(now.getDay() + 6) % 7]) return;
+    const [hh, mm] = S.hora.split(':').map(Number);
+    if (now.getHours() * 60 + now.getMinutes() < hh * 60 + mm) return;
+    const n = novos().length;
+    if (!n) return;
+    S.lastNotified = t;
+    persist();
+    notify('Hora de clarear o dia', `Você anotou ${plural(n, 'assunto', 'assuntos')}. Leva uns 2 minutos.`);
+  }
+  async function askNotification() {
+    if (!('Notification' in window)) { toast('Este navegador não mostra notificações. O Hoje vai te avisar quando houver o que clarear.'); return false; }
+    if (Notification.permission === 'granted') return true;
+    if (Notification.permission === 'denied') { toast('As notificações estão bloqueadas. Libere nas configurações do navegador para o Clarea.'); return false; }
+    try { const p = await Notification.requestPermission(); return p === 'granted'; } catch (e) { return false; }
+  }
+
+  /* =========================================================
+     18. Painéis
+     ========================================================= */
+  function sheetHtml() {
+    const s = S.sheet;
+    if (!s) return '';
+    const close = `<button class="icon-btn" data-act="sheet-close" aria-label="Fechar">${IC.x}</button>`;
+    const share = navigator.share ? '<button class="btn" data-act="share">Compartilhar</button>' : '';
+    let body = '';
+    if (s.kind === 'pauta') {
+      body = `<header class="row between"><div class="row">${ava(s.person)}<h1 style="font-size:22px">Pauta com ${esc(s.person)}</h1></div>${close}</header>
+        <p class="small muted">Tudo o que está seguindo com ${esc(s.person)}, pronto para colar no chat ou levar para a conversa.</p>
+        <pre id="copy-area">${esc(pautaText(s.person))}</pre>
+        <button class="btn btn-primary" data-act="copy">Copiar pauta</button>${share}`;
+    } else if (s.kind === 'semana') {
+      body = `<header class="row between"><h1 style="font-size:22px">Resumo da semana</h1>${close}</header>
+        <p class="small muted">Resolvidos, o que virou tarefa e o que segue, por tema.</p>
+        <pre id="copy-area">${esc(semanaText())}</pre>
+        <button class="btn btn-primary" data-act="copy">Copiar resumo</button>${share}`;
+    } else if (s.kind === 'sempessoa') {
+      const list = visiveis().filter((i) => !i.person);
+      body = `<header class="row between"><h1 style="font-size:22px">Só com você</h1>${close}</header>
+        ${list.length ? `<ul class="focus-list">${list.map(itemCard).join('')}</ul>` : '<p class="muted">Nada aqui agora.</p>'}`;
+    } else if (s.kind === 'foco') {
+      body = `<header class="row between"><h1 style="font-size:22px">Mudar o foco de hoje</h1>${close}</header>
+        <p class="small muted">Até 3 assuntos. <strong>${S.pick.length} de 3</strong> escolhidos.</p>
+        ${pickerList()}
+        <button class="btn btn-primary" data-act="foco-save">Salvar foco</button>`;
+    } else if (s.kind === 'editar') {
+      const e = S.editSel, it = byId(s.id);
+      if (!it) return '';
+      const people = uniq([e.person].concat(S.people)).slice(0, 8);
+      const temas = uniq([e.tema].concat(activeTemas())).slice(0, 8);
+      const ch = (f, v, l, a) => chipBtn('edit-pick', f, v, l, norm(e[f]) === norm(v), false, a);
+      body = `<header class="row between"><h1 style="font-size:22px">Editar assunto</h1>${close}</header>
+        <form id="edit-item-form" class="stack-s"><label for="edit-item-text" class="label">Texto</label><input id="edit-item-text" value="${esc(it.text)}"></form>
+        <div class="stack-s"><span class="label">Tipo</span><div class="chips">${TYPES.map(([k, l]) => ch('type', k, l)).join('')}</div></div>
+        <div class="stack-s"><span class="label">Pessoa</span><div class="chips">${people.map((p) => ch('person', p, p, true)).join('')}${e.adding === 'person' ? '' : '<button class="chip add" data-act="edit-add" data-field="person">+ Outra</button>'}</div>${e.adding === 'person' ? addFormHtml('person', 'edit-add-form') : ''}</div>
+        <div class="stack-s"><span class="label">Tema</span><div class="chips">${temas.map((p) => ch('tema', p, p)).join('')}${e.adding === 'tema' ? '' : '<button class="chip add" data-act="edit-add" data-field="tema">+ Outro</button>'}</div>${e.adding === 'tema' ? addFormHtml('tema', 'edit-add-form') : ''}</div>
+        <button class="btn btn-primary" data-act="edit-save">Salvar</button>`;
+    }
+    return `<div class="overlay" data-act="sheet-close-bg"><div class="sheet" role="dialog" aria-modal="true">${body}</div></div>`;
+  }
+
+  /* =========================================================
+     19. Renderização
+     ========================================================= */
+  const SCREENS = { 'boas-vindas': scrBoasVindas, nome: scrNome, ritmo: scrRitmo, atrapalha: scrAtrapalha, lembrete: scrLembrete, convite: scrConvite,
+    anotar: scrAnotar, 'clear-intro': scrClearIntro, clarear: scrClear, foco: scrFoco, resumo: scrResumo, hoje: scrHoje, historico: scrHistorico, perfil: scrPerfil, pessoas: scrPessoas };
+  function applyTheme() {
+    if (S.theme === 'system') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', S.theme);
+    const dark = S.theme === 'dark' || (S.theme === 'system' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', dark ? '#16151C' : '#F5F3F8');
+  }
+  function render(focusId) {
+    applyTheme();
+    const scr = SCREENS[S.screen] || scrHoje;
+    document.getElementById('main').innerHTML = scr();
+    const dock = document.getElementById('dock');
+    dock.innerHTML = S.screen === 'anotar' ? dockAnotar() : '';
+    dock.className = S.tour === 1 && S.screen === 'anotar' ? 'tour-focus' : '';
+    const nav = document.getElementById('nav');
+    const showNav = ['anotar', 'hoje', 'historico'].includes(S.screen) && S.tour !== 1;
+    nav.hidden = !showNav;
+    nav.innerHTML = showNav ? `<button data-act="go" data-to="hoje" ${S.screen === 'hoje' ? 'aria-current="page"' : ''}>${IC.hoje}<span>Hoje</span></button>
+      <button class="fab" data-act="go" data-to="anotar" ${S.screen === 'anotar' ? 'aria-current="page"' : ''}>${IC.plus}<span>Anotar</span></button>
+      <button data-act="go" data-to="historico" ${S.screen === 'historico' ? 'aria-current="page"' : ''}>${IC.hist}<span>Histórico</span></button>` : '';
+    document.getElementById('tour-ov').hidden = !(S.ver || (S.tour === 1 && S.screen === 'anotar') || (S.tour === 2 && S.screen === 'clarear'));
+    document.getElementById('ver-b').innerHTML = verBalloon();
+    document.getElementById('sheet').innerHTML = sheetHtml();
+    if (S.screen === 'resumo') {
+      const ring = document.getElementById('ring-resumo');
+      if (ring) requestAnimationFrame(() => requestAnimationFrame(() => { ring.style.strokeDashoffset = '0'; }));
+    }
+    if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); if (el.setSelectionRange && el.value) el.setSelectionRange(el.value.length, el.value.length); } }
+    persist();
+  }
+  function go(screen, focusId) { S.screen = screen; S.editing = null; S.sheet = null; S.personEdit = null; S.temaEdit = null; render(focusId); document.getElementById('main').scrollTop = 0; }
+
+  let toastTimer = null;
+  function toast(msg, undoable) {
+    const t = document.getElementById('toast');
+    t.innerHTML = `<span>${esc(msg)}</span>${undoable ? '<button data-act="undo">Desfazer</button>' : ''}`;
+    t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, undoable ? 5000 : 3200);
+  }
+  function doAction(id, how) {
+    const it = byId(id);
+    if (!it) return;
+    S.undo = { snap: Object.assign({}, it), taskId: null };
+    if (how === 'resolvido') { it.status = 'resolvido'; it.doneDate = today(); it.focus = false; toast('Resolvido. Um a menos na cabeça.', true); }
+    if (how === 'tarefa') { it.status = 'tarefa'; it.doneDate = today(); it.focus = false; const t = { id: nid(), text: it.text, done: false, created: today(), itemId: it.id }; S.tasks.push(t); S.undo.taskId = t.id; toast('Virou tarefa.', true); }
+    if (how === 'amanha') { it.snoozeUntil = addDays(today(), 1); toast('Guardado para amanhã. Os dias continuam contando.', true); }
+    if (how === 'solto') { it.status = 'solto'; it.focus = false; toast('Deixado pra lá. Fica no histórico.', true); }
+    S.expanded = null;
+    render();
+  }
+
+  /* =========================================================
+     20. Eventos
+     ========================================================= */
+  document.addEventListener('click', async (e) => {
+    const el = e.target.closest('[data-act]');
+    if (!el || el.disabled) return;
+    const act = el.dataset.act;
+    if (act === 'sheet-close-bg' && e.target !== el) return;
+    if (act !== 'reset') S.confirmReset = false;
+    switch (act) {
+      case 'go': go(el.dataset.to, el.dataset.to === 'anotar' ? 'new-line' : null); break;
+      case 'nome-ok': S.name = document.getElementById('nome').value.trim(); if (!S.name) { toast('Escreva como prefere ser chamado(a).'); return; } go('ritmo'); break;
+      case 'hora': S.hora = el.dataset.val; S.otherHora = false; render(); break;
+      case 'hora-outro': S.otherHora = true; render('hora-in'); break;
+      case 'dia': { const k = Number(el.dataset.k); S.dias[k] = !S.dias[k]; render(); break; }
+      case 'atr': { const k = Number(el.dataset.k); S.atrapalha = S.atrapalha.includes(k) ? S.atrapalha.filter((x) => x !== k) : S.atrapalha.concat(k); render(); break; }
+      case 'atr-skip': S.atrapalha = []; go('lembrete'); break;
+      case 'lembrete': {
+        if (el.dataset.val === '1') { S.lembrete = await askNotification(); if (S.lembrete) toast(`Lembrete ativado para as ${horaLabel(S.hora)}.`); }
+        else S.lembrete = false;
+        go('convite');
+        break;
+      }
+      case 'tour-start': S.onboarded = true; S.welcomed = true; S.tour = 1; go('anotar', 'new-line'); break;
+      case 'tour-skip': S.onboarded = true; S.welcomed = true; S.tour = null; go('hoje'); break;
+      case 'tour-2': S.tour = 2; startClear(false); render(); break;
+      case 'tour-end': S.tour = null; render(); toast('Pronto. O passeio fica em Perfil › Ajuda, se quiser rever.'); break;
+      case 'tour-ver': S.onboarded = true; S.welcomed = true; if (S.demo) { restoreRealData(); S.demo = false; } stashRealData(); seedDemo(); S.ver = 1; verGo(); break;
+      case 'ver-next': S.ver++; verGo(); break;
+      case 'ver-end': restoreRealData(); S.ver = null; S.clear = null; S.expanded = null; go('hoje'); toast('O exemplo saiu. O app está pronto para você.'); break;
+      case 'demo-start': stashRealData(); seedDemo(); S.demo = true; go('hoje'); break;
+      case 'demo-end': restoreRealData(); S.demo = false; S.clear = null; S.expanded = null; go('hoje'); toast('Você saiu da demonstração.'); break;
+      case 'tip-ok': S.tips[el.dataset.key] = true; render(); break;
+      case 'tips-reset': S.tips = {}; toast('As dicas vão aparecer de novo em cada tela.'); render(); break;
+      case 'edit': S.editing = el.dataset.id; render('edit-input'); break;
+      case 'edit-cancel': S.editing = null; render(); break;
+      case 'edit-del': S.items = S.items.filter((i) => i.id !== el.dataset.id); S.editing = null; render(); toast('Anotação apagada.'); break;
+      case 'toggle-old': S.showOld = !S.showOld; render(); break;
+      case 'clear-intro': go('clear-intro'); break;
+      case 'clear-start': startClear(el.dataset.mode === '3'); render(); document.getElementById('main').scrollTop = 0; break;
+      case 'clear-exit': if (S.tour) S.tour = null; go(S.clear && S.clear.idx > 0 ? 'resumo' : 'anotar'); break;
+      case 'pick': { const f = el.dataset.field, v = el.dataset.val; S.clear.sel[f] = norm(S.clear.sel[f]) === norm(v) ? '' : v; render(); break; }
+      case 'add': S.clear.adding = el.dataset.field; render('add-form-in'); break;
+      case 'clear-ok': finishItem((it) => { Object.assign(it, { status: 'aberto' }, S.clear.sel); learn(S.clear.sel.person, S.clear.sel.tema); }, 'org'); render(); document.getElementById('main').scrollTop = 0; break;
+      case 'clear-skip': finishItem((it) => { it.status = 'aberto'; }, 'org'); render(); break;
+      case 'clear-res': finishItem((it) => { Object.assign(it, S.clear.sel, { status: 'resolvido', doneDate: today() }); learn(S.clear.sel.person, S.clear.sel.tema); }, 'res'); render(); break;
+      case 'clear-solto': finishItem((it) => { it.status = 'solto'; }, 'solto'); render(); break;
+      case 'clear-undo': {
+        const h = S.clear.hist.pop();
+        if (!h) return;
+        Object.assign(byId(h.id), h.snap);
+        S.clear.stats[h.k]--;
+        S.clear.idx--;
+        loadSel();
+        render();
+        break;
+      }
+      case 'pick-foco': {
+        const id = el.dataset.id;
+        if (S.pick.includes(id)) S.pick = S.pick.filter((x) => x !== id);
+        else if (S.pick.length >= 3) { toast('Até 3 no foco. Desmarque um para escolher outro.'); return; }
+        else S.pick = S.pick.concat(id);
+        render();
+        break;
+      }
+      case 'foco-ok': setFocus(S.pick); S.screen = 'resumo'; render(); break;
+      case 'foco-skip': setFocus([]); S.screen = 'resumo'; render(); break;
+      case 'foco-open': S.pick = focusList().list.map((i) => i.id); S.sheet = { kind: 'foco' }; render(); break;
+      case 'foco-save': setFocus(S.pick); S.sheet = null; S.expanded = null; render(); toast('Foco atualizado.'); break;
+      case 'resumo-ok': if (S.ver) { S.ver = 4; verGo(); break; } if (S.tour === 2) S.tour = 3; go('hoje'); break;
+      case 'expand': S.expanded = S.expanded === el.dataset.id ? '__none' : el.dataset.id; render(); break;
+      case 'do': doAction(el.dataset.id, el.dataset.how); break;
+      case 'undo': {
+        if (!S.undo) return;
+        const it = byId(S.undo.snap.id);
+        if (it) Object.assign(it, S.undo.snap);
+        if (S.undo.taskId) S.tasks = S.tasks.filter((t) => t.id !== S.undo.taskId);
+        S.undo = null;
+        document.getElementById('toast').hidden = true;
+        render();
+        break;
+      }
+      case 'item-edit': { const it = byId(el.dataset.id); if (!it) return; S.editSel = { type: it.type, person: it.person, tema: it.tema, adding: null }; S.sheet = { kind: 'editar', id: it.id }; render(); break; }
+      case 'edit-pick': { const f = el.dataset.field, v = el.dataset.val; S.editSel[f] = norm(S.editSel[f]) === norm(v) ? '' : v; render(); break; }
+      case 'edit-add': S.editSel.adding = el.dataset.field; render('edit-add-form-in'); break;
+      case 'edit-save': {
+        const it = byId(S.sheet.id);
+        const txt = (document.getElementById('edit-item-text') || {}).value;
+        if (it) { if (txt && txt.trim()) it.text = txt.trim(); it.type = S.editSel.type; it.person = S.editSel.person; it.tema = S.editSel.tema; learn(it.person, it.tema); }
+        S.sheet = null; render(); toast('Assunto atualizado.');
+        break;
+      }
+      case 'tasks-clean': S.tasks = S.tasks.filter((t) => !t.done); render(); break;
+      case 'sheet': S.sheet = { kind: el.dataset.kind, person: el.dataset.person }; render(); break;
+      case 'sheet-close': case 'sheet-close-bg': S.sheet = null; render(); break;
+      case 'copy': {
+        const pre = document.getElementById('copy-area');
+        const txt = pre.textContent;
+        const p = navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(txt) : Promise.reject();
+        p.then(() => toast('Copiado.')).catch(() => { const r = document.createRange(); r.selectNodeContents(pre); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r); toast('Texto selecionado. Use a opção copiar do aparelho.'); });
+        break;
+      }
+      case 'share': { const txt = document.getElementById('copy-area').textContent; navigator.share({ text: txt }).catch(() => {}); break; }
+      case 'hist-tab': S.histTab = el.dataset.val; render(); break;
+      case 'theme': S.theme = el.dataset.val; render(); break;
+      case 'lembrete-toggle': {
+        if (!S.lembrete) { const ok = await askNotification(); S.lembrete = ok; if (ok) toast(`Lembrete ativado para as ${horaLabel(S.hora)}.`); }
+        else { S.lembrete = false; toast('Lembrete desligado.'); }
+        render();
+        break;
+      }
+      case 'person-edit': S.personEdit = { name: el.dataset.name }; render('person-rename-in'); break;
+      case 'person-cancel': S.personEdit = null; render(); break;
+      case 'tema-edit': S.temaEdit = el.dataset.name; render('tema-rename-in'); break;
+      case 'tema-cancel': S.temaEdit = null; render(); break;
+      case 'tema-arq': {
+        const t = el.dataset.name;
+        const arq = S.temasArq.some((a) => norm(a) === norm(t));
+        S.temasArq = arq ? S.temasArq.filter((a) => norm(a) !== norm(t)) : S.temasArq.concat(t);
+        S.temaEdit = null; render(); toast(arq ? 'Tema reativado.' : 'Tema arquivado. Os assuntos continuam no histórico.');
+        break;
+      }
+      case 'export': exportBackup(); break;
+      case 'import': document.getElementById('file-in').click(); break;
+      case 'import-ok': { const obj = S.pendingImport; S.pendingImport = null; applyImport(obj); break; }
+      case 'import-cancel': S.pendingImport = null; render(); break;
+      case 'reset':
+        if (!S.confirmReset) { S.confirmReset = true; render(); return; }
+        await dbClear();
+        S = Object.assign(fresh(), { theme: S.theme });
+        go('boas-vindas');
+        toast('Tudo apagado deste aparelho.');
+        break;
+    }
+  });
+
+  document.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const f = e.target;
+    if (f.id === 'composer') {
+      const inp = document.getElementById('new-line');
+      if (addItem(inp.value)) render('new-line');
+    } else if (f.id === 'edit-form') {
+      const it = byId(f.dataset.id), v = document.getElementById('edit-input').value.trim();
+      if (it && v) it.text = v;
+      S.editing = null; render();
+    } else if (f.id === 'add-form') {
+      const v = document.getElementById('add-form-in').value.trim();
+      if (v) S.clear.sel[f.dataset.field] = cap(v);
+      S.clear.adding = null; render();
+    } else if (f.id === 'edit-add-form') {
+      const v = document.getElementById('edit-add-form-in').value.trim();
+      if (v) S.editSel[f.dataset.field] = cap(v);
+      S.editSel.adding = null; render();
+    } else if (f.id === 'edit-item-form') {
+      document.querySelector('[data-act="edit-save"]').click();
+    } else if (f.id === 'perfil-nome-form') {
+      const v = document.getElementById('perfil-nome').value.trim();
+      if (v) { S.name = v; render(); toast('Nome atualizado.'); }
+    } else if (f.id === 'person-rename') {
+      renamePerson(f.dataset.name, document.getElementById('person-rename-in').value);
+      S.personEdit = null; render(); toast('Pessoa atualizada.');
+    } else if (f.id === 'person-merge') {
+      const to = document.getElementById('person-merge-in').value;
+      renamePerson(f.dataset.name, to);
+      S.personEdit = null; render(); toast(`Juntado com ${to}.`);
+    } else if (f.id === 'tema-rename') {
+      renameTema(f.dataset.name, document.getElementById('tema-rename-in').value);
+      S.temaEdit = null; render(); toast('Tema atualizado.');
+    }
+  });
+
+  document.addEventListener('input', (e) => {
+    const t = e.target;
+    if (t.id === 'busca') { S.q = t.value; document.getElementById('hist-list').innerHTML = histList(); }
+    if (t.id === 'nome') { const p = document.getElementById('nome-preview'); if (p) p.textContent = t.value.trim() || 'você'; }
+  });
+  document.addEventListener('change', (e) => {
+    const t = e.target;
+    if (t.dataset && t.dataset.task) { const k = S.tasks.find((x) => x.id === t.dataset.task); if (k) k.done = t.checked; render(); }
+    if (t.id === 'hora-in' || t.id === 'perfil-hora') { if (t.value) S.hora = t.value; S.lastNotified = ''; if (t.id === 'perfil-hora') toast(`Clarear o dia às ${horaLabel(S.hora)}.`); persist(); }
+    if (t.id === 'perfil-nome') { const v = t.value.trim(); if (v) { S.name = v; persist(); } }
+    if (t.id === 'file-in' && t.files && t.files[0]) { onImportFile(t.files[0]); t.value = ''; }
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.sheet) { S.sheet = null; render(); } });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S.onboarded) { checkReminder(); render(); } });
+  if (window.matchMedia) { try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (S.theme === 'system') applyTheme(); }); } catch (e) { /* navegador antigo */ } }
+
+  /* =========================================================
+     21. Início
+     ========================================================= */
+  async function boot() {
+    const saved = await dbGet();
+    if (saved) applyData(saved);
+    S.screen = S.onboarded ? 'hoje' : 'boas-vindas';
+    const params = new URLSearchParams(location.search);
+    if (S.onboarded && params.get('tela') === 'anotar') S.screen = 'anotar';
+    render(S.screen === 'anotar' ? 'new-line' : null);
+    checkReminder();
+    setInterval(checkReminder, 30000);
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      navigator.serviceWorker.register('sw.js').catch(() => { /* sem modo offline, o app funciona igual */ });
+    }
+  }
+  boot();
+})();
+</script>
+</body>
+</html>
