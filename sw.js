@@ -1,19 +1,31 @@
 /* Service worker do Clarea: guarda o app no aparelho para funcionar sem internet.
    Ao mudar qualquer arquivo do app, aumente o número da versão abaixo. */
-const VERSAO = 'clarea-v1';
+const VERSAO = 'clarea-v2';
+
+// Sem estes arquivos o app não abre offline. Se algum faltar, a instalação falha de propósito.
 const ESSENCIAIS = [
   './',
   './index.html',
-  './manifest.webmanifest',
+  './manifest.webmanifest'
+];
+// Guardados quando possível. Se faltar algum, o app continua funcionando offline.
+const OPCIONAIS = [
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
-  './icons/apple-touch-icon.png'
-];
-const OPCIONAIS = [
+  './icons/apple-touch-icon.png',
   './fonts/AtkinsonHyperlegible-Regular.ttf',
   './fonts/AtkinsonHyperlegible-Bold.ttf'
 ];
+// Ao abrir o app, espera a internet por no máximo este tempo; depois usa a cópia guardada.
+const LIMITE_REDE_MS = 3000;
+
+function comLimite(promessa, ms) {
+  return new Promise((ok, erro) => {
+    const t = setTimeout(() => erro(new Error('tempo esgotado')), ms);
+    promessa.then((r) => { clearTimeout(t); ok(r); }, (e) => { clearTimeout(t); erro(e); });
+  });
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil((async () => {
@@ -36,20 +48,25 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   if (req.mode === 'navigate') {
-    // Páginas: tenta a internet para pegar a versão nova; sem internet, usa a guardada.
+    // Páginas: tenta a internet para pegar a versão nova, mas sem esperar para sempre.
+    // Sem internet, lenta demais ou com resposta de erro, usa a cópia guardada.
+    // Só respostas de sucesso substituem a cópia guardada.
+    const rede = fetch(req).then(async (res) => {
+      if (res.ok) await (await caches.open(VERSAO)).put('./index.html', res.clone());
+      return res;
+    });
+    event.waitUntil(rede.catch(() => null)); // se passar do limite, ainda atualiza a cópia em segundo plano
     event.respondWith((async () => {
-      try {
-        const res = await fetch(req);
-        const cache = await caches.open(VERSAO);
-        cache.put('./index.html', res.clone());
-        return res;
-      } catch (e) {
-        return (await caches.match('./index.html')) || (await caches.match('./'));
-      }
+      let res = null;
+      try { res = await comLimite(rede, LIMITE_REDE_MS); } catch (e) { /* sem internet ou lenta */ }
+      if (res && res.ok) return res;
+      const copia = (await caches.match('./index.html')) || (await caches.match('./'));
+      if (copia) return copia;
+      return res || rede; // sem cópia guardada: devolve o que a internet respondeu (ou falha)
     })());
     return;
   }
-  // Demais arquivos: usa o guardado e, se não houver, busca e guarda.
+  // Demais arquivos: usa o guardado e, se não houver, busca e guarda (só respostas de sucesso).
   event.respondWith((async () => {
     const cached = await caches.match(req);
     if (cached) return cached;
