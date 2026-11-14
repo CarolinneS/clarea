@@ -63,6 +63,7 @@ export function validar(est) {
     for (const k of ['completed_at', 'archived_at', 'deleted_at', 'confirmed_at', 'due_at', 'reminder_at']) if (!ehIsoOuNulo(a[k])) e(`${w}: ${k} inválido`);
     if (a.resume_at !== null && !ehData(a.resume_at)) e(`${w}: resume_at deve ser AAAA-MM-DD`);
     if (a.status === 'done' && !a.completed_at) e(`${w}: concluído sem completed_at`);
+    if (!Number.isInteger(a.ordem)) e(`${w}: ordem deve ser um número inteiro`);
     if (typeof a.focus !== 'boolean') e(`${w}: focus deve ser verdadeiro ou falso`);
     if (!ORIGENS.includes(a.source)) e(`${w}: origem inválida (${a.source})`);
   });

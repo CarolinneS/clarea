@@ -76,9 +76,10 @@ export function migrarParaV2(v1, ctx) {
     id: '', original_text: '', text: '', created_at: agora, updated_at: agora, status: 'inbox', next_action: null,
     person_id: null, topic_id: null, due_at: null, reminder_at: null, resume_at: null, source: 'migration',
     ai_suggestion: null, ai_confidence: null, confirmed_at: null, completed_at: null, archived_at: null, deleted_at: null,
-    focus: false, local_version: 1, server_version: null, legado: null, ...campos
+    focus: false, ordem: 0, local_version: 1, server_version: null, legado: null, ...campos
   });
 
+  let ordem = 0; // posição na lista antiga: preserva a ordem em que os assuntos foram criados
   itens.forEach((i) => {
     const t = texto(i.text);
     if (!texto(i.id) || !t.trim()) return;
@@ -89,7 +90,7 @@ export function migrarParaV2(v1, ctx) {
     const acao = ACAO_POR_TIPO[i.type] || null;
     const adiado = ehData(i.snoozeUntil) && i.snoozeUntil > hoje ? i.snoozeUntil : null;
     const a = novoAssunto({
-      id: i.id, original_text: t, text: t, created_at: criado, updated_at: criado,
+      id: i.id, original_text: t, text: t, created_at: criado, updated_at: criado, ordem: ordem++,
       person_id: pe ? pe.id : null, topic_id: te ? te.id : null,
       legado: { status: texto(i.status), type: texto(i.type), person: texto(i.person), tema: texto(i.tema), snoozeUntil: texto(i.snoozeUntil), doneDate: texto(i.doneDate), created: texto(i.created), focus: i.focus === true }
     });
@@ -124,7 +125,7 @@ export function migrarParaV2(v1, ctx) {
     ids.add(id);
     const feito = t.done === true;
     out.assuntos.push(novoAssunto({
-      id, original_text: tx, text: tx, created_at: criado, updated_at: criado, status: feito ? 'done' : 'in_progress', next_action: 'do', completed_at: feito ? criado : null,
+      id, original_text: tx, text: tx, created_at: criado, updated_at: criado, ordem: ordem++, status: feito ? 'done' : 'in_progress', next_action: 'do', completed_at: feito ? criado : null,
       legado: { tarefa: { id: t.id, text: tx, done: feito, created: texto(t.created), itemId: texto(t.itemId), itemExistia: itemIds.has(t.itemId) } }
     }));
   });
