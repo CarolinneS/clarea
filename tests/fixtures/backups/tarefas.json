@@ -1,0 +1,119 @@
+{
+ "app": "clarea",
+ "v": 1,
+ "name": "Pessoa Fictícia",
+ "hora": "18:00",
+ "dias": [
+  true,
+  true,
+  true,
+  true,
+  true,
+  false,
+  false
+ ],
+ "atrapalha": [
+  0,
+  2
+ ],
+ "lembrete": false,
+ "theme": "light",
+ "onboarded": true,
+ "welcomed": true,
+ "tips": {
+  "anotar": true
+ },
+ "lastBackup": "2026-11-01",
+ "lastNotified": "",
+ "items": [
+  {
+   "id": "b1",
+   "text": "Virou tarefa pendente",
+   "created": "2026-11-10",
+   "status": "tarefa",
+   "type": "fazer",
+   "person": "",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "2026-11-11",
+   "focus": false
+  },
+  {
+   "id": "b2",
+   "text": "Virou tarefa e foi feita",
+   "created": "2026-11-10",
+   "status": "tarefa",
+   "type": "fazer",
+   "person": "",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "2026-11-09",
+   "focus": false
+  },
+  {
+   "id": "b3",
+   "text": "Virou tarefa e a tarefa foi limpa",
+   "created": "2026-11-10",
+   "status": "tarefa",
+   "type": "fazer",
+   "person": "",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "2026-11-08",
+   "focus": false
+  },
+  {
+   "id": "b4",
+   "text": "Assunto aberto com tarefa estranha",
+   "created": "2026-11-10",
+   "status": "aberto",
+   "type": "fazer",
+   "person": "",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": false
+  }
+ ],
+ "tasks": [
+  {
+   "id": "t1",
+   "text": "Virou tarefa pendente",
+   "done": false,
+   "created": "2026-11-11",
+   "itemId": "b1"
+  },
+  {
+   "id": "t2",
+   "text": "Virou tarefa e foi feita",
+   "done": true,
+   "created": "2026-11-09",
+   "itemId": "b2"
+  },
+  {
+   "id": "t3",
+   "text": "Tarefa sem assunto",
+   "done": false,
+   "created": "2026-11-07",
+   "itemId": ""
+  },
+  {
+   "id": "t4",
+   "text": "Tarefa de assunto que sumiu",
+   "done": true,
+   "created": "2026-11-06",
+   "itemId": "nao-existe"
+  },
+  {
+   "id": "t5",
+   "text": "Tarefa ligada a assunto aberto",
+   "done": false,
+   "created": "2026-11-10",
+   "itemId": "b4"
+  }
+ ],
+ "people": [],
+ "temas": [],
+ "temasArq": [],
+ "savedAt": "2026-11-13T12:00:00.000Z"
+}

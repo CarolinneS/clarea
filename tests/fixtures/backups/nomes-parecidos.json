@@ -1,0 +1,117 @@
+{
+ "app": "clarea",
+ "v": 1,
+ "name": "Pessoa Fictícia",
+ "hora": "18:00",
+ "dias": [
+  true,
+  true,
+  true,
+  true,
+  true,
+  false,
+  false
+ ],
+ "atrapalha": [
+  0,
+  2
+ ],
+ "lembrete": false,
+ "theme": "light",
+ "onboarded": true,
+ "welcomed": true,
+ "tips": {
+  "anotar": true
+ },
+ "lastBackup": "2026-11-01",
+ "lastNotified": "",
+ "items": [
+  {
+   "id": "c1",
+   "text": "Falar com maria",
+   "created": "2026-11-10",
+   "status": "aberto",
+   "type": "fazer",
+   "person": "maria",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "c2",
+   "text": "Falar com MARIA",
+   "created": "2026-11-10",
+   "status": "aberto",
+   "type": "fazer",
+   "person": "MARIA ",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "c3",
+   "text": "Falar com Joao",
+   "created": "2026-11-10",
+   "status": "aberto",
+   "type": "fazer",
+   "person": "Joao",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "c4",
+   "text": "Tema com acento",
+   "created": "2026-11-10",
+   "status": "aberto",
+   "type": "fazer",
+   "person": "",
+   "tema": "Vendas",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "c5",
+   "text": "Pessoa só no item",
+   "created": "2026-11-10",
+   "status": "aberto",
+   "type": "fazer",
+   "person": "Zélia",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "c6",
+   "text": "Tema arquivado em uso",
+   "created": "2026-11-10",
+   "status": "aberto",
+   "type": "fazer",
+   "person": "",
+   "tema": "Projeto A",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": false
+  }
+ ],
+ "tasks": [],
+ "people": [
+  "Maria",
+  "João"
+ ],
+ "temas": [
+  "Vendas",
+  "vendas ",
+  "Projeto A",
+  "Projeto-A"
+ ],
+ "temasArq": [
+  "Projeto A"
+ ],
+ "savedAt": "2026-11-13T12:00:00.000Z"
+}
