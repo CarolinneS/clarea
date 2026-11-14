@@ -131,7 +131,7 @@ test('gravarAssunto altera só aquele assunto, e 5.000 assuntos importam em pouc
   await contexto.close();
 });
 
-test('o app continua abrindo e funcionando igual (o armazenamento novo ainda não está ligado)', async () => {
+test('o app abre e mostra os assuntos que já estavam guardados', async () => {
   const { contexto, pagina: pg } = await novaPagina(amb, estadoBase([assunto('Continua aqui')]));
   await pg.goto(amb.url);
   assert.ok(await pg.locator('text=Continua aqui').count() >= 1);
