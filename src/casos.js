@@ -76,6 +76,24 @@ export function organizar(est, id, campos, ctx) {
   return m;
 }
 
+/** Corrige só o texto (o original fica guardado). Não muda estado nem tira da caixa de entrada. */
+export function editarTexto(est, id, texto, ctx) {
+  const a = achar(est, id), m = mudancaVazia();
+  const t = String(texto || '').trim();
+  if (t && t !== a.text) m.assuntos.push(tocar(a, ctx, { text: t }));
+  return m;
+}
+
+/** Junta duas mudanças feitas em sequência numa só (a segunda vale sobre a primeira). */
+export function unir(a, b) {
+  const por = (x, y) => { const mapa = new Map(x.map((e) => [e.id, e])); y.forEach((e) => mapa.set(e.id, e)); return [...mapa.values()]; };
+  const u = (x, y) => [...new Set([...x, ...y])];
+  return {
+    assuntos: por(a.assuntos, b.assuntos).filter((e) => !b.removerAssuntos.includes(e.id)), pessoas: por(a.pessoas, b.pessoas), temas: por(a.temas, b.temas),
+    removerAssuntos: u(a.removerAssuntos, b.removerAssuntos), removerPessoas: u(a.removerPessoas, b.removerPessoas), removerTemas: u(a.removerTemas, b.removerTemas)
+  };
+}
+
 /** Resolvido: conclui o assunto e tira do foco. */
 export function resolver(est, id, ctx) {
   const a = achar(est, id), m = mudancaVazia();

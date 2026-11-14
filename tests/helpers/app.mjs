@@ -29,6 +29,11 @@ export async function novaPagina(amb, estado) {
     const u = r.url();
     if (!u.startsWith(amb.url) && !u.startsWith('data:') && !u.startsWith('blob:')) pagina.requisicoesExternas.push(u);
   });
+  // O app abre de forma assíncrona (banco de dados): ao abrir ou recarregar o app, espera ele terminar de abrir.
+  const eApp = (u) => u === amb.url || u.startsWith(amb.url + '?') || u.startsWith(amb.url + 'index.html');
+  const ir = pagina.goto.bind(pagina), recarregar = pagina.reload.bind(pagina);
+  pagina.goto = async (u, o) => { const r = await ir(u, o); if (eApp(u)) await pagina.waitForSelector('body[data-pronto]'); return r; };
+  pagina.reload = async (o) => { const r = await recarregar(o); if (eApp(pagina.url())) await pagina.waitForSelector('body[data-pronto]'); return r; };
   if (estado) await gravarEstado(amb, pagina, estado);
   return { contexto, pagina };
 }
@@ -48,15 +53,33 @@ export async function gravarEstado(amb, pagina, estado) {
   }), estado);
 }
 
-// Lê os assuntos guardados no IndexedDB (ou null se não houver nada guardado).
-export function lerAssuntos(pagina) {
-  return pagina.evaluate(() => new Promise((ok) => {
-    const q = indexedDB.open('clarea');
+// Lê os assuntos guardados no banco do modelo 2.0 (`clarea-v2`, tabela `assuntos`), na ordem de criação.
+// Devolve cada um já com os nomes que os testes usam (text, status da tela, focus) mais o registro original em `v2`.
+// Devolve null se não houver nada guardado.
+const STATUS_TELA = { inbox: 'novo', in_progress: 'aberto', waiting: 'aberto', scheduled: 'aberto', done: 'resolvido', discarded: 'solto', archived: 'solto' };
+export async function lerAssuntos(pagina) {
+  const lista = await pagina.evaluate(() => new Promise((ok) => {
+    const q = indexedDB.open('clarea-v2');
     q.onerror = () => ok(null);
     q.onsuccess = () => {
-      if (!q.result.objectStoreNames.contains('kv')) { q.result.close(); ok(null); return; }
-      const g = q.result.transaction('kv').objectStore('kv').get('estado');
-      g.onsuccess = () => { q.result.close(); ok(g.result ? g.result.items : null); };
+      if (!q.result.objectStoreNames.contains('assuntos')) { q.result.close(); ok(null); return; }
+      const g = q.result.transaction('assuntos').objectStore('assuntos').getAll();
+      g.onsuccess = () => { q.result.close(); ok(g.result); };
+    };
+  }));
+  if (!lista || !lista.length) return null;
+  return lista.sort((a, b) => a.ordem - b.ordem).map((a) => ({ id: a.id, text: a.text, status: STATUS_TELA[a.status], focus: a.focus, v2: a }));
+}
+
+// Lê as configurações guardadas no banco do modelo 2.0 (tabela `meta`, chave `config`).
+export function lerConfig(pagina) {
+  return pagina.evaluate(() => new Promise((ok) => {
+    const q = indexedDB.open('clarea-v2');
+    q.onerror = () => ok(null);
+    q.onsuccess = () => {
+      if (!q.result.objectStoreNames.contains('meta')) { q.result.close(); ok(null); return; }
+      const g = q.result.transaction('meta').objectStore('meta').get('config');
+      g.onsuccess = () => { q.result.close(); ok(g.result ? g.result.valor : null); };
     };
   }));
 }

@@ -2,7 +2,7 @@
 // Os testes usam um marcador inofensivo (window.__m = 1) no lugar de código real.
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { abrirAmbiente, novaPagina, estadoBase, assunto } from '../helpers/app.mjs';
+import { abrirAmbiente, novaPagina, estadoBase, assunto, lerAssuntos, lerConfig } from '../helpers/app.mjs';
 
 let amb;
 before(async () => { amb = await abrirAmbiente(); });
@@ -59,17 +59,18 @@ test('cópia com campos fora do formato é limpa: valores inválidos viram padr�
     null, 42, 'texto solto', { text: '   ' }
   ], { hora: '99:99', theme: 'neon', dias: [1, 2, 3], atrapalha: [0, 99, 'x'] });
   const { contexto, pagina } = await importar(copia);
-  const e = await pagina.evaluate(() => new Promise((res) => { const r = indexedDB.open('clarea'); r.onsuccess = () => { const q = r.result.transaction('kv').objectStore('kv').get('estado'); q.onsuccess = () => res(q.result); }; }));
-  assert.equal(e.items.length, 3, 'só os 3 assuntos válidos entram');
-  const status = e.items.find((i) => i.text === 'Status estranho');
-  assert.equal(status.status, 'aberto');
-  assert.equal(status.type, '');
-  assert.match(status.created, /^\d{4}-\d{2}-\d{2}$/);
-  assert.equal(new Set(e.items.map((i) => i.id)).size, 3, 'ids repetidos são refeitos');
-  assert.equal(e.hora, '18:00');
-  assert.equal(e.theme, 'light');
-  assert.equal(e.dias.length, 7);
-  assert.deepEqual(e.atrapalha, [0]);
+  const itens = await lerAssuntos(pagina);
+  const cfg = await lerConfig(pagina);
+  assert.equal(itens.length, 3, 'só os 3 assuntos válidos entram');
+  const status = itens.find((i) => i.text === 'Status estranho').v2;
+  assert.equal(status.status, 'in_progress');
+  assert.equal(status.next_action, null);
+  assert.match(status.created_day, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(new Set(itens.map((i) => i.id)).size, 3, 'ids repetidos são refeitos');
+  assert.equal(cfg.hora, '18:00');
+  assert.equal(cfg.theme, 'light');
+  assert.equal(cfg.dias.length, 7);
+  assert.deepEqual(cfg.atrapalha, [0]);
   await contexto.close();
 });
 

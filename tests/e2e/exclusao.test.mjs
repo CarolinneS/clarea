@@ -17,19 +17,6 @@ test('apagar uma anotação oferece Desfazer', async () => {
   await contexto.close();
 });
 
-test('limpar tarefas concluídas oferece Desfazer', async () => {
-  const estado = estadoBase([assunto('Em andamento', { focus: true })], {
-    tasks: [{ id: 't1', text: 'Tarefa feita', done: true, created: '2026-11-10', itemId: 'x' }]
-  });
-  const { contexto, pagina } = await novaPagina(amb, estado);
-  await pagina.goto(amb.url);
-  await pagina.click('text=Limpar concluídas');
-  const visivel = await pagina.evaluate(() => !document.getElementById('toast').hidden);
-  assert.ok(visivel, 'esperava um aviso na tela');
-  assert.match(await pagina.textContent('#toast'), /Desfazer/);
-  await contexto.close();
-});
-
 test('"Desfazer" depois de resolver devolve o assunto ao foco', async () => {
   const { contexto, pagina } = await novaPagina(amb, estadoBase([assunto('Resolver este', { focus: true })]));
   await pagina.goto(amb.url);
@@ -50,23 +37,6 @@ test('Desfazer devolve a anotação apagada, no mesmo lugar', async () => {
   assert.deepEqual(textos(await lerAssuntos(pagina)), ['Um', 'Tres']);
   await pagina.click('#toast button:has-text("Desfazer")');
   assert.deepEqual(textos(await lerAssuntos(pagina)), ['Um', 'Dois', 'Tres']);
-  await contexto.close();
-});
-
-test('Desfazer devolve as tarefas concluídas removidas', async () => {
-  const estado = estadoBase([assunto('Em andamento', { focus: true })], {
-    tasks: [
-      { id: 't1', text: 'Feita', done: true, created: '2026-11-10', itemId: '' },
-      { id: 't2', text: 'Pendente', done: false, created: '2026-11-10', itemId: '' }
-    ]
-  });
-  const { contexto, pagina } = await novaPagina(amb, estado);
-  await pagina.goto(amb.url);
-  await pagina.click('text=Limpar concluídas');
-  assert.equal(await pagina.locator('text=Feita').count(), 0);
-  await pagina.click('#toast button:has-text("Desfazer")');
-  await pagina.waitForSelector('text=Feita');
-  assert.equal(await pagina.locator('text=Pendente').count(), 1);
   await contexto.close();
 });
 

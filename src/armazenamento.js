@@ -107,3 +107,28 @@ export async function aplicarMudanca(db, m) {
     if (m.removerTemas.length) await db.temas.bulkDelete(m.removerTemas);
   });
 }
+
+/**
+ * Troca todos os dados de uso pelos de `est` (restaurar uma cópia de segurança), numa única transação.
+ * As cópias dos dados 1.0 guardadas em `copias` não são tocadas.
+ */
+export async function substituirTudo(db, est) {
+  await db.transaction('rw', [db.assuntos, db.pessoas, db.temas, db.tarefas, db.eventos, db.meta], async () => {
+    await Promise.all([db.assuntos.clear(), db.pessoas.clear(), db.temas.clear(), db.tarefas.clear(), db.eventos.clear()]);
+    await db.assuntos.bulkAdd(est.assuntos);
+    await db.pessoas.bulkAdd(est.pessoas);
+    await db.temas.bulkAdd(est.temas);
+    await db.tarefas.bulkAdd(est.tarefas);
+    await db.eventos.bulkAdd(est.eventos.map(({ seq, ...resto }) => resto));
+    await db.meta.put({ chave: 'config', valor: est.config });
+    await db.meta.put({ chave: 'migracao', valor: est.migracao || { de: 'copia', para: 2, em: new Date().toISOString() } });
+  });
+}
+
+/** Apaga todos os bancos do Clarea neste aparelho: o novo e o do formato 1.0. */
+export async function apagarBancos(db, nomes = [NOME_BANCO, 'clarea']) {
+  if (db) db.close();
+  await Promise.all(nomes.map((n) => new Promise((ok) => {
+    try { const q = indexedDB.deleteDatabase(n); q.onsuccess = q.onerror = q.onblocked = () => ok(); } catch (e) { ok(); }
+  })));
+}

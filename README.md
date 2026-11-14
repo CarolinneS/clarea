@@ -1,4 +1,4 @@
-# Clarea · versão 1.0.7
+# Clarea · versão 1.0.8
 
 > Escreva como pensa. O Clarea organiza no fim do dia.
 
@@ -52,8 +52,17 @@ feat: MVP do Clarea como app instalável (Anotar, Clarear o dia, Hoje)
 ## Como publicar uma atualização
 
 1. Altere os arquivos.
-2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.7`). Um teste automático avisa se algum ficar diferente.
+2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.8`). Um teste automático avisa se algum ficar diferente.
 3. Envie para o GitHub. Quem já tem o app instalado recebe a versão nova ao abrir o app (às vezes é preciso fechar e abrir de novo).
+
+## O que mudou na 1.0.8
+
+- O app passou a usar o modelo de dados 2.0 (D-012). Na primeira abertura, os dados da versão anterior são trazidos uma única vez para o banco novo (`clarea-v2`); o banco antigo não é alterado.
+- Cada ação (anotar, resolver, amanhã, deixar pra lá, foco, editar, apagar, juntar pessoas e temas) grava só o registro afetado. Duas abas ou aparelhos em uso não se sobrescrevem.
+- **Saiu o "Virar tarefa" e a seção Tarefas** (D-009). Tarefas antigas aparecem como assuntos Em andamento com ação Fazer.
+- A cópia de segurança agora sai no formato 2. Ainda é possível restaurar cópias antigas (formato 1).
+- "Apagar tudo" apaga o banco novo e o antigo.
+- Se o banco novo não abrir, o app mostra os dados antigos em memória e avisa para salvar uma cópia.
 
 ## O que mudou na 1.0.7
 

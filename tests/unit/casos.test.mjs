@@ -221,3 +221,28 @@ test('assunto inexistente dá erro claro em todos os casos que pedem id', () => 
   const est = base();
   for (const f of [() => C.organizar(est, 'x', {}, ctx()), () => C.resolver(est, 'x', ctx()), () => C.adiar(est, 'x', ctx()), () => C.deixarPraLa(est, 'x', ctx())]) assert.throws(f, /não encontrado/);
 });
+
+test('editarTexto: troca só o texto, mantém o original e não tira da caixa de entrada', () => {
+  const est = congelar(base());
+  const inbox = est.assuntos.find((a) => a.status === 'inbox');
+  const a = C.editarTexto(est, inbox.id, '  Novo texto ', ctx()).assuntos[0];
+  assert.deepEqual([a.status, a.text, a.original_text], ['inbox', 'Novo texto', inbox.original_text]);
+  assert.ok(C.semMudanca(C.editarTexto(est, inbox.id, '   ', ctx())));
+  assert.ok(C.semMudanca(C.editarTexto(est, inbox.id, inbox.text, ctx())));
+});
+
+test('unir: duas mudanças em sequência valem como uma, e desfazer volta ao começo', () => {
+  const est = congelar(base());
+  const inbox = est.assuntos.find((a) => a.status === 'inbox');
+  const m1 = C.organizar(est, inbox.id, { tipo: 'fazer', pessoa: 'Gente Nova' }, ctx());
+  const m2 = C.resolver(ap(est, m1), inbox.id, ctx());
+  const junto = C.unir(m1, m2);
+  assert.equal(junto.assuntos.filter((a) => a.id === inbox.id).length, 1);
+  const dep = ap(est, junto);
+  assert.deepEqual(dep, ap(ap(est, m1), m2));
+  assert.deepEqual([por(dep, inbox.id).status, por(dep, inbox.id).next_action], ['done', 'do']);
+  assert.deepEqual(ap(dep, C.inverter(est, junto)).assuntos, est.assuntos);
+  assert.deepEqual(ap(dep, C.inverter(est, junto)).pessoas, est.pessoas);
+  const apaga = C.unir(m1, C.apagar(ap(est, m1), inbox.id));
+  assert.ok(!ap(est, apaga).assuntos.some((a) => a.id === inbox.id));
+});

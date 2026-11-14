@@ -294,10 +294,14 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
 import { TYPES, typeLabel, esc, norm, cap, plural, iso, addDays, diffDays, ageOf as ageOfEm, ageText, ageCls, horaLabel, dateShort as dateShortEm, initials, avaCls, fmt1 } from './src/util.js';
 import { suggest as suggestPuro } from './src/sugestao.js';
 import { score as scorePuro, bySuggestion as bySuggestionPuro, focusList as focusListPuro, dayPct as dayPctPuro, doneToday as doneTodayPuro } from './src/foco.js';
+import { estadoVazio, novoAssunto, validar as validarV2 } from './src/modelo.js';
+import { migrarParaV2, detectarFormato } from './src/migracao.js';
+import * as Casos from './src/casos.js';
+import * as Arm from './src/armazenamento.js';
 import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation as observationPuro } from './src/textos.js';
 (function () {
   'use strict';
-  const VERSAO = '1.0.7';
+  const VERSAO = '1.0.8';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -338,10 +342,10 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   const tp = (k) => (k ? `<span class="tp ${k}">${typeLabel(k)}</span>` : '');
   /* =========================================================
      3. Estado
-     Tudo o que está em PERSIST é guardado no aparelho (IndexedDB).
+     As configurações (PERSIST) são guardadas no aparelho. Os assuntos, pessoas e temas vivem no modelo 2.0 (E, seção 3b);
+     S.items, S.people, S.temas e S.temasArq são só a visão que as telas leem, refeita a cada mudança.
      ========================================================= */
-  const PERSIST = ['name', 'hora', 'dias', 'atrapalha', 'lembrete', 'theme', 'onboarded', 'welcomed', 'tips', 'lastBackup', 'lastNotified', 'items', 'tasks', 'people', 'temas', 'temasArq'];
-  const DATA_KEYS = ['items', 'tasks', 'people', 'temas', 'temasArq'];
+  const PERSIST = ['name', 'hora', 'dias', 'atrapalha', 'lembrete', 'theme', 'onboarded', 'welcomed', 'tips', 'lastBackup', 'lastNotified'];
   const fresh = () => ({
     // guardado
     name: '', hora: '18:00', dias: [true, true, true, true, true, false, false], atrapalha: [], lembrete: false, theme: 'light',
@@ -364,21 +368,51 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   const dayPct = () => dayPctPuro(doneToday(), visiveis().length);
   const activeTemas = () => S.temas.filter((t) => !S.temasArq.some((a) => norm(a) === norm(t)));
 
-  function addItem(text, extra) {
-    const t = String(text || '').trim();
-    if (!t) return null;
-    const it = Object.assign({ id: nid(), text: t, created: today(), status: 'novo', type: '', person: '', tema: '', snoozeUntil: '', doneDate: '', focus: false }, extra || {});
-    S.items.push(it);
-    return it;
+  /* =========================================================
+     3b. Dados no modelo 2.0 (D-012)
+     E é o estado 2.0 em memória; cada mudança passa por um caso de uso (src/casos.js), é gravada por registro
+     no Dexie (src/armazenamento.js) e refaz a visão das telas.
+     ========================================================= */
+  let E = estadoVazio(), DB = null, Ereal = null, avisouMemoria = false;
+  const ctx = () => ({ hoje: today(), agora: new Date().toISOString() });
+  const STATUS_TELA = { inbox: 'novo', in_progress: 'aberto', waiting: 'aberto', scheduled: 'aberto', done: 'resolvido', discarded: 'solto', archived: 'solto' };
+  function visao() {
+    const nomeP = new Map(E.pessoas.map((x) => [x.id, x.name])), nomeT = new Map(E.temas.map((x) => [x.id, x.name]));
+    S.items = E.assuntos.map((a) => ({ id: a.id, text: a.text, created: a.created_day, status: STATUS_TELA[a.status] || 'aberto', type: Casos.tipoDe(a), person: nomeP.get(a.person_id) || '', tema: nomeT.get(a.topic_id) || '', snoozeUntil: a.resume_at || '', doneDate: a.completed_day || '', focus: a.focus }));
+    S.people = E.pessoas.map((x) => x.name);
+    S.temas = E.temas.map((x) => x.name);
+    S.temasArq = E.temas.filter((x) => x.archived_at).map((x) => x.name);
   }
-  function learn(person, tema) {
-    if (person && !S.people.some((p) => norm(p) === norm(person))) S.people.push(person);
-    if (tema && !S.temas.some((p) => norm(p) === norm(tema))) S.temas.push(tema);
+  function avisarSemBanco() {
+    if (avisouMemoria) return;
+    avisouMemoria = true;
+    toast('Não consegui guardar neste navegador. Salve uma cópia no Perfil.');
   }
+  function gravar(m) {
+    if (!DB) { avisarSemBanco(); return; }
+    fila = fila.then(() => Arm.aplicarMudanca(DB, m)).then(() => { if (canal) canal.postMessage({ tipo: 'atualizado' }); }).catch(() => { toast('Não consegui salvar a última mudança. Salve uma cópia no Perfil.'); });
+  }
+  /* Aplica uma mudança e devolve a que a desfaz. Em demonstração nada é gravado. */
+  function commit(m) {
+    if (Casos.semMudanca(m)) return m;
+    const antes = E;
+    E = Casos.aplicar(E, m);
+    visao();
+    if (!Ereal) gravar(m);
+    return Casos.inverter(antes, m);
+  }
+  function addItem(text) {
+    const m = Casos.capturar(E, text, ctx());
+    if (Casos.semMudanca(m)) return null;
+    commit(m);
+    return m.assuntos[0];
+  }
+  const nomeParaId = (lista, nome) => { const x = lista.find((e) => e.name === nome) || lista.find((e) => norm(e.name) === norm(nome)); return x ? x.id : null; };
 
   /* =========================================================
      4. Guardar no aparelho (IndexedDB, com plano B no localStorage)
      ========================================================= */
+  /* Banco do formato 1.0: só é lido, uma vez, para trazer os dados antigos (importarV1). */
   const DB_NAME = 'clarea', STORE = 'kv', KEY = 'estado';
   let dbPromise = null;
   function idb() {
@@ -387,7 +421,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
         try {
           const r = indexedDB.open(DB_NAME, 1);
           r.onupgradeneeded = () => r.result.createObjectStore(STORE);
-          r.onsuccess = () => res(r.result);
+          r.onsuccess = () => { r.result.onversionchange = () => r.result.close(); res(r.result); };
           r.onerror = () => rej(r.error);
         } catch (e) { rej(e); }
       });
@@ -402,37 +436,19 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       try { const j = localStorage.getItem('clarea-estado'); return j ? JSON.parse(j) : null; } catch (_) { return null; }
     }
   }
-  async function dbPut(obj) {
-    try {
-      const db = await idb();
-      await new Promise((res, rej) => { const tx = db.transaction(STORE, 'readwrite'); tx.objectStore(STORE).put(obj, KEY); tx.oncomplete = res; tx.onerror = () => rej(tx.error); });
-    } catch (e) {
-      try { localStorage.setItem('clarea-estado', JSON.stringify(obj)); } catch (_) { toast('Não consegui salvar neste navegador. Salve uma cópia no Perfil.'); }
-    }
-  }
-  async function dbClear() {
-    try { const db = await idb(); await new Promise((res) => { const tx = db.transaction(STORE, 'readwrite'); tx.objectStore(STORE).delete(KEY); tx.oncomplete = res; tx.onerror = res; }); } catch (e) { /* nada */ }
-    try { localStorage.removeItem('clarea-estado'); } catch (e) { /* nada */ }
-  }
-  function snapshot() {
-    const o = { app: 'clarea', v: 1, savedAt: new Date().toISOString() };
-    PERSIST.forEach((k) => { o[k] = S[k]; });
-    if (S.saved) Object.assign(o, JSON.parse(S.saved)); // em demonstração, guarda os dados reais, não os inventados
-    return JSON.parse(JSON.stringify(o));
-  }
-  /* Gravação: cada mudança é gravada na hora, em fila (uma de cada vez, na ordem),
-     e só quando algo realmente mudou. Assim nada se perde se o app for fechado em seguida. */
+  /* Configurações: gravadas na hora, em fila (uma de cada vez), e só quando algo realmente mudou. */
   let ultimaChave = null;
   let fila = Promise.resolve();
   const canal = typeof BroadcastChannel === 'function' ? new BroadcastChannel('clarea') : null;
-  function chaveDe(obj) { const c = Object.assign({}, obj); delete c.savedAt; return JSON.stringify(c); }
+  const configDeS = () => { const c = {}; PERSIST.forEach((k) => { c[k] = S[k]; }); return c; };
   function persist() {
     if (!S.onboarded && !S.items.length) return;
-    const obj = snapshot();
-    const chave = chaveDe(obj);
+    const cfg = configDeS();
+    const chave = JSON.stringify(cfg);
     if (chave === ultimaChave) return;
     ultimaChave = chave;
-    fila = fila.then(() => dbPut(obj)).then(() => { if (canal) canal.postMessage({ tipo: 'atualizado' }); }).catch(() => { /* aviso já mostrado em dbPut */ });
+    if (!DB) { avisarSemBanco(); return; }
+    fila = fila.then(() => Arm.gravarConfig(DB, cfg)).then(() => { if (canal) canal.postMessage({ tipo: 'atualizado' }); }).catch(() => { toast('Não consegui salvar as configurações. Salve uma cópia no Perfil.'); });
   }
   /* Validação: tudo o que vem de fora (cópia de segurança ou dados já guardados) é conferido campo a campo.
      O que não tem o formato esperado é descartado ou trocado por um valor padrão, e nada disso vira código. */
@@ -490,22 +506,52 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     if (typeof obj.savedAt === 'string' && !isNaN(new Date(obj.savedAt))) o.savedAt = obj.savedAt;
     return o;
   }
-  function applyData(obj) {
-    const limpo = limparCopia(obj);
+  function aplicarConfig(cfg) {
+    const limpo = limparCopia(cfg);
     PERSIST.forEach((k) => { if (limpo[k] !== undefined) S[k] = limpo[k]; });
+  }
+  /* Cópia no formato 2: confere e reduz a campos conhecidos. O que não tem o formato esperado é recusado (erro). */
+  function limparV2(obj) {
+    const lista = (v) => { if (!Array.isArray(v) || v.length > LIMITE_ITENS) throw new Error('lista inválida'); return v.filter((x) => x && typeof x === 'object' && !Array.isArray(x)); };
+    const idOk = (v) => typeof v === 'string' && /^[\w-]{1,64}$/.test(v);
+    const permitido = Object.keys(novoAssunto({}));
+    const est = estadoVazio();
+    const cfg = limparCopia(obj.config);
+    est.config = {}; PERSIST.forEach((k) => { est.config[k] = cfg[k]; });
+    est.assuntos = lista(obj.assuntos).map((a) => {
+      const o = {};
+      permitido.forEach((k) => { if (a[k] !== undefined) o[k] = a[k]; });
+      if (!idOk(o.id)) throw new Error('id inválido');
+      o.text = txt(o.text, LIMITE_TEXTO); o.original_text = txt(o.original_text, LIMITE_TEXTO);
+      o.legado = o.legado && typeof o.legado === 'object' && JSON.stringify(o.legado).length < 20000 ? o.legado : null;
+      return o;
+    });
+    const entidades = (v) => lista(v).map((e) => { if (!idOk(e.id)) throw new Error('id inválido'); return { id: e.id, name: txt(e.name, 200), created_at: e.created_at, archived_at: e.archived_at === undefined ? null : e.archived_at }; });
+    est.pessoas = entidades(obj.pessoas);
+    est.temas = entidades(obj.temas);
+    est.tarefas = Array.isArray(obj.tarefas) && obj.tarefas.length ? lista(obj.tarefas).map((t) => ({ id: t.id, assunto_id: t.assunto_id, title: txt(t.title, LIMITE_TEXTO), status: t.status, due_at: t.due_at ?? null, reminder_at: t.reminder_at ?? null, created_at: t.created_at, completed_at: t.completed_at ?? null })) : [];
+    est.migracao = obj.migracao && typeof obj.migracao === 'object' ? obj.migracao : null;
+    const erros = validarV2(est);
+    if (erros.length) throw new Error(erros[0]);
+    return est;
   }
   /* Outra aba (ou o app ao voltar) pode ter gravado algo novo: traz para cá sem apagar o que está sendo digitado. */
   function digitando() {
     const a = document.activeElement;
     return !!a && (a.tagName === 'TEXTAREA' || (a.tagName === 'INPUT' && /^(text|search|time|)$/.test(a.type))) && a.value !== '';
   }
+  const chaveEstado = () => JSON.stringify([E.assuntos, E.pessoas, E.temas, configDeS()]);
   async function trazerDeFora() {
-    if (S.demo) return;
-    const saved = await dbGet();
-    if (!saved) return;
-    if (chaveDe(saved) === ultimaChave) return;
-    applyData(saved);
-    ultimaChave = chaveDe(snapshot());
+    if (Ereal || !DB) return;
+    await fila.catch(() => {}); // primeiro termina o que este aparelho ainda está gravando
+    const est = await Arm.lerEstado(DB);
+    const temConfig = !!(await DB.meta.get('config'));
+    const antes = chaveEstado();
+    E = est;
+    if (temConfig) aplicarConfig(est.config);
+    visao();
+    if (chaveEstado() === antes) return;
+    ultimaChave = JSON.stringify(configDeS());
     if (!digitando()) render();
   }
   if (canal) {
@@ -525,28 +571,27 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
      ========================================================= */
   function seedDemo() {
     const d = (n) => addDays(today(), -n);
-    ['Ana', 'Bruno', 'Carla'].forEach((p) => learn(p, ''));
-    ['Produto Alpha', 'Operações', 'Pessoas'].forEach((p) => learn('', p));
-    addItem('Aguardando retorno da Ana sobre o orçamento', { created: d(6), status: 'aberto', type: 'esperando', person: 'Ana', tema: 'Produto Alpha', focus: true });
-    addItem('Cobrar a Ana pela lista de requisitos', { created: d(5), status: 'aberto', type: 'retomar', person: 'Ana', tema: 'Produto Alpha', focus: true });
-    addItem('Confirmar sala para o treinamento de sexta', { created: d(3), status: 'aberto', type: 'confirmar', tema: 'Operações' });
-    addItem('Conversar com o Bruno sobre a escala de suporte', { created: d(1), status: 'aberto', type: 'conversar', person: 'Bruno', tema: 'Operações', focus: true });
-    addItem('Aguardando a Carla validar o plano de férias', { created: d(4), status: 'resolvido', type: 'esperando', person: 'Carla', tema: 'Pessoas', doneDate: today() });
-    addItem('Mandar o resumo da reunião para a Carla', { created: d(2), status: 'resolvido', type: 'fazer', person: 'Carla', tema: 'Pessoas', doneDate: today() });
-    addItem('Revisar o texto do comunicado do Alpha');
-    addItem('Mandar a pauta da reunião de equipe #Pessoas');
-    addItem('Ver com o Bruno a escala do feriado');
-    addItem('Esperando o Daniel mandar o relatório de custos');
+    const it = (id, text, o) => Object.assign({ id, text, created: today(), status: 'novo', type: '', person: '', tema: '', snoozeUntil: '', doneDate: '', focus: false }, o || {});
+    const v1 = {
+      app: 'clarea', v: 1, people: ['Ana', 'Bruno', 'Carla'], temas: ['Produto Alpha', 'Operações', 'Pessoas'], temasArq: [], tasks: [],
+      items: [
+        it('d1', 'Aguardando retorno da Ana sobre o orçamento', { created: d(6), status: 'aberto', type: 'esperando', person: 'Ana', tema: 'Produto Alpha', focus: true }),
+        it('d2', 'Cobrar a Ana pela lista de requisitos', { created: d(5), status: 'aberto', type: 'retomar', person: 'Ana', tema: 'Produto Alpha', focus: true }),
+        it('d3', 'Confirmar sala para o treinamento de sexta', { created: d(3), status: 'aberto', type: 'confirmar', tema: 'Operações' }),
+        it('d4', 'Conversar com o Bruno sobre a escala de suporte', { created: d(1), status: 'aberto', type: 'conversar', person: 'Bruno', tema: 'Operações', focus: true }),
+        it('d5', 'Aguardando a Carla validar o plano de férias', { created: d(4), status: 'resolvido', type: 'esperando', person: 'Carla', tema: 'Pessoas', doneDate: today() }),
+        it('d6', 'Mandar o resumo da reunião para a Carla', { created: d(2), status: 'resolvido', type: 'fazer', person: 'Carla', tema: 'Pessoas', doneDate: today() }),
+        it('d7', 'Revisar o texto do comunicado do Alpha'),
+        it('d8', 'Mandar a pauta da reunião de equipe #Pessoas'),
+        it('d9', 'Ver com o Bruno a escala do feriado'),
+        it('d10', 'Esperando o Daniel mandar o relatório de custos')
+      ]
+    };
+    E = migrarParaV2(v1, ctx());
+    visao();
   }
-  function stashRealData() {
-    S.saved = JSON.stringify(Object.fromEntries(DATA_KEYS.map((k) => [k, S[k]])));
-    DATA_KEYS.forEach((k) => { S[k] = []; });
-  }
-  function restoreRealData() {
-    const back = JSON.parse(S.saved || '{}');
-    DATA_KEYS.forEach((k) => { S[k] = Array.isArray(back[k]) ? back[k] : []; });
-    S.saved = null;
-  }
+  function stashRealData() { Ereal = E; E = estadoVazio(); visao(); }
+  function restoreRealData() { if (Ereal) { E = Ereal; Ereal = null; } visao(); }
 
   /* =========================================================
      7. Clarear o dia e foco
@@ -568,11 +613,11 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     S.clear.sel = { type: s.type, person: s.person, tema: s.tema };
     S.clear.adding = null;
   }
-  function finishItem(apply, statKey) {
+  function finishItem(fazMudanca, statKey) {
     const it = curItem();
     if (!it) return;
-    S.clear.hist.push({ id: it.id, snap: Object.assign({}, it), k: statKey });
-    apply(it);
+    const inv = commit(fazMudanca(it));
+    S.clear.hist.push({ id: it.id, inv, k: statKey });
     S.clear.stats[statKey]++;
     S.clear.idx++;
     if (S.clear.idx >= S.clear.queue.length) enterFoco();
@@ -581,7 +626,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   const score = (i) => scorePuro(i, today());
   const bySuggestion = (list) => bySuggestionPuro(list, today());
   const focusList = () => focusListPuro(visiveis(), today());
-  function setFocus(ids) { abertos().forEach((i) => { i.focus = ids.includes(i.id); }); }
+  function setFocus(ids) { commit(Casos.definirFoco(E, ids, ctx())); }
   function enterFoco() {
     const c = visiveis();
     if (!c.length) { S.screen = 'resumo'; return; }
@@ -831,8 +876,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     return `<div class="actions"><button class="act good" data-act="do" data-how="resolvido" data-id="${i.id}">Resolvido</button>
       <button class="act" data-act="do" data-how="amanha" data-id="${i.id}">Amanhã</button>
       <button class="act soft" data-act="do" data-how="solto" data-id="${i.id}">Deixar pra lá</button></div>
-      <div class="row" style="padding:0 16px 12px;gap:12px"><button class="link quiet" data-act="do" data-how="tarefa" data-id="${i.id}" style="min-height:36px;font-size:14px">Virar tarefa</button>
-        <button class="link quiet" data-act="item-edit" data-id="${i.id}" style="min-height:36px;font-size:14px">Editar</button></div>`;
+      <div class="row" style="padding:0 16px 12px;gap:12px"><button class="link quiet" data-act="item-edit" data-id="${i.id}" style="min-height:36px;font-size:14px">Editar</button></div>`;
   }
   function itemCard(i) {
     const open = S.expanded === i.id;
@@ -862,7 +906,6 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
         <p class="muted">O anel mostra o quanto o dia já clareou. No foco ficam os assuntos que você escolheu, com ações em um toque, e dá para mudar quando quiser. Nas suas iniciais, lá em cima, ficam as configurações.</p>
         <button class="btn-s primary" data-act="tour-end" style="align-self:flex-end">Concluir</button></div>` : '';
     const quiet = S.tour === 3 || S.ver;
-    const doneTasks = S.tasks.filter((t) => t.done).length;
     return `${demoBar()}<header class="row between"><div class="stack-s" style="gap:2px"><span class="small muted">${dateLong()}</span><h1 class="hoje-h1">${greeting()}${S.name ? ', ' + esc(S.name) : ''}</h1></div>
         <button class="me ${S.tour === 3 ? 'glow' : ''}" data-act="go" data-to="perfil" aria-label="Perfil e configurações">${esc(myInitial())}</button></header>
       <div class="lens-card">${lens(108, pct)}<div class="stack-s" style="gap:6px;min-width:0"><div class="lens-title">${title}</div><p class="small muted">${sub}</p></div></div>
@@ -875,8 +918,6 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       ${Object.keys(per).length || semPessoa ? `<span class="label">Por pessoa</span><div class="people">
         ${Object.keys(per).sort((a, b) => per[b] - per[a]).map((p) => `<button class="person" data-act="sheet" data-kind="pauta" data-person="${esc(p)}">${ava(p, true)}<span>${esc(p)} · ${per[p]}</span></button>`).join('')}
         ${semPessoa ? `<button class="person" data-act="sheet" data-kind="sempessoa"><span class="ava lg none" style="border-radius:50%">·</span><span>Só você · ${semPessoa}</span></button>` : ''}</div>` : ''}
-      ${S.tasks.length ? `<div class="row between"><span class="label">Tarefas</span>${doneTasks ? `<button class="link quiet" data-act="tasks-clean" style="min-height:36px">Limpar concluídas (${doneTasks})</button>` : ''}</div>
-        <ul class="tasks card" style="padding:4px 16px">${S.tasks.map((t) => `<li class="${t.done ? 'done' : ''}"><label><input type="checkbox" data-task="${t.id}" ${t.done ? 'checked' : ''}><span>${esc(t.text)}</span></label></li>`).join('')}</ul>` : ''}
       ${quiet ? '' : backupNudge()}
       ${S.items.length ? `<button class="link" data-act="sheet" data-kind="semana" style="align-self:center">Resumo da semana</button>` : ''}
       ${tipCard('hoje', true)}`;
@@ -885,7 +926,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   /* =========================================================
      14. Histórico e números
      ========================================================= */
-  const STATUS = { novo: ['Para clarear', ''], aberto: ['Seguindo', 'seg'], resolvido: ['Resolvido', 'res'], tarefa: ['Virou tarefa', ''], solto: ['Deixado pra lá', ''] };
+  const STATUS = { novo: ['Para clarear', ''], aberto: ['Seguindo', 'seg'], resolvido: ['Resolvido', 'res'], solto: ['Deixado pra lá', ''] };
   function histList() {
     const q = norm(S.q);
     const list = S.items.filter((i) => !q || norm([i.text, i.person, i.tema, typeLabel(i.type)].join(' ')).includes(q)).sort((a, b) => (b.created > a.created ? 1 : b.created < a.created ? -1 : 0));
@@ -899,7 +940,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   function avgBy(field) {
     const g = {};
     S.items.forEach((i) => {
-      if (!(i.status === 'resolvido' || i.status === 'tarefa') || !i.doneDate || !i[field]) return;
+      if (i.status !== 'resolvido' || !i.doneDate || !i[field]) return;
       const d = Math.max(0, diffDays(i.created, i.doneDate));
       (g[i[field]] = g[i[field]] || []).push(d);
     });
@@ -913,7 +954,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   function numbersHtml() {
     const desde = addDays(today(), -6);
     const anot = S.items.filter((i) => i.created >= desde).length;
-    const res = S.items.filter((i) => (i.status === 'resolvido' || i.status === 'tarefa') && i.doneDate >= desde).length;
+    const res = S.items.filter((i) => i.status === 'resolvido' && i.doneDate >= desde).length;
     const old = bySuggestion(visiveis()).sort((a, b) => ageOf(b) - ageOf(a)).slice(0, 5);
     return `<div class="stack-s"><span class="label">Últimos 7 dias</span><div class="stat-row">
         <div class="stat"><strong>${anot}</strong><span class="xs muted">anotados</span></div>
@@ -987,28 +1028,19 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       <div class="stack-s"><span class="label">Temas</span>${temasAll.length ? `<div class="list-card">${temasAll.map(temaRow).join('')}</div>` : '<p class="small muted">Nenhum tema ainda. Use # numa anotação ou “+ Adicionar um tema” no Clarear o dia.</p>'}</div>`;
   }
   function renamePerson(from, to) {
-    to = to.trim();
-    if (!to || to === from) return;
-    const existing = S.people.find((p) => norm(p) === norm(to) && p !== from);
-    S.items.forEach((i) => { if (i.person === from) i.person = existing || to; });
-    S.people = S.people.filter((p) => p !== from);
-    if (!existing) S.people.push(to);
+    const id = nomeParaId(E.pessoas, from);
+    if (id) commit(Casos.renomearPessoa(E, id, to, ctx()));
   }
   function renameTema(from, to) {
-    to = to.trim();
-    if (!to || to === from) return;
-    const existing = S.temas.find((p) => norm(p) === norm(to) && p !== from);
-    S.items.forEach((i) => { if (i.tema === from) i.tema = existing || to; });
-    S.temas = S.temas.filter((p) => p !== from);
-    if (!existing) S.temas.push(to);
-    S.temasArq = S.temasArq.map((a) => (a === from ? existing || to : a));
+    const id = nomeParaId(E.temas, from);
+    if (id) commit(Casos.renomearTema(E, id, to, ctx()));
   }
 
   /* =========================================================
      16. Cópia de segurança
      ========================================================= */
   function exportBackup() {
-    const data = JSON.stringify(snapshot(), null, 2);
+    const data = JSON.stringify({ app: 'clarea', ...structuredClone(Ereal || E), config: configDeS(), savedAt: new Date().toISOString() }, null, 2);
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1021,7 +1053,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   }
   function importConfirm() {
     const p = S.pendingImport;
-    const n = (p.items || []).length;
+    const n = p.n;
     return `<div class="card stack-s" style="border-color:var(--primary)"><p><strong>Restaurar esta cópia?</strong></p>
       <p class="small muted">Cópia de ${p.savedAt ? new Date(p.savedAt).toLocaleDateString('pt-BR') : 'data desconhecida'}, com ${plural(n, 'assunto', 'assuntos')}. Isso substitui o que está neste aparelho.</p>
       <div class="row"><button class="btn-s primary" data-act="import-ok">Restaurar</button><button class="btn-s" data-act="import-cancel">Cancelar</button></div></div>`;
@@ -1032,19 +1064,27 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     r.onload = () => {
       let obj = null;
       try { obj = JSON.parse(r.result); } catch (e) { obj = null; }
-      if (!obj || typeof obj !== 'object' || obj.app !== 'clarea' || !Array.isArray(obj.items)) { toast('Esse arquivo não parece ser uma cópia do Clarea.'); return; }
-      obj = limparCopia(obj);
-      if (!S.onboarded && !S.items.length) { applyImport(obj); return; }
-      S.pendingImport = obj; S.screen = 'perfil'; render(); document.getElementById('main').scrollTop = 0;
+      const fmt = detectarFormato(obj);
+      if (!obj || typeof obj !== 'object' || obj.app !== 'clarea' || fmt === 'desconhecido' || (fmt === 'v1' && !Array.isArray(obj.items))) { toast('Esse arquivo não parece ser uma cópia do Clarea.'); return; }
+      let est;
+      try { est = fmt === 'v1' ? migrarParaV2(limparCopia(obj), ctx()) : limparV2(obj); } catch (e) { toast('Esse arquivo não parece ser uma cópia do Clarea.'); return; }
+      const imp = { est, n: est.assuntos.length, savedAt: typeof obj.savedAt === 'string' && !isNaN(new Date(obj.savedAt)) ? obj.savedAt : '' };
+      if (!S.onboarded && !S.items.length) { applyImport(imp); return; }
+      S.pendingImport = imp; S.screen = 'perfil'; render(); document.getElementById('main').scrollTop = 0;
     };
     r.readAsText(file);
   }
-  function applyImport(obj) {
+  async function applyImport(imp) {
     const theme = S.theme;
+    if (DB) { try { await fila.catch(() => {}); await Arm.substituirTudo(DB, imp.est); } catch (e) { toast('Não consegui restaurar esta cópia.'); return; } }
     S = Object.assign(fresh(), { theme });
-    applyData(obj);
+    E = imp.est; Ereal = null;
+    aplicarConfig(E.config);
     S.onboarded = true; S.welcomed = true;
+    visao();
+    ultimaChave = null;
     persist();
+    if (canal) canal.postMessage({ tipo: 'atualizado' });
     go('hoje');
     toast(`Cópia restaurada: ${plural(S.items.length, 'assunto', 'assuntos')}.`);
   }
@@ -1096,7 +1136,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
         <button class="btn btn-primary" data-act="copy">Copiar pauta</button>${share}`;
     } else if (s.kind === 'semana') {
       body = `<header class="row between"><h1 style="font-size:22px">Resumo da semana</h1>${close}</header>
-        <p class="small muted">Resolvidos, o que virou tarefa e o que segue, por tema.</p>
+        <p class="small muted">Resolvidos e o que segue, por tema.</p>
         <pre id="copy-area">${esc(semanaText())}</pre>
         <button class="btn btn-primary" data-act="copy">Copiar resumo</button>${share}`;
     } else if (s.kind === 'sempessoa') {
@@ -1195,13 +1235,12 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     toastTimer = setTimeout(() => { t.hidden = true; }, undoable ? 8000 : 3200);
   }
   function doAction(id, how) {
-    const it = byId(id);
-    if (!it) return;
-    S.undo = { snap: Object.assign({}, it), taskId: null };
-    if (how === 'resolvido') { it.status = 'resolvido'; it.doneDate = today(); it.focus = false; toast('Resolvido. Um a menos na cabeça.', true); }
-    if (how === 'tarefa') { it.status = 'tarefa'; it.doneDate = today(); it.focus = false; const t = { id: nid(), text: it.text, done: false, created: today(), itemId: it.id }; S.tasks.push(t); S.undo.taskId = t.id; toast('Virou tarefa.', true); }
-    if (how === 'amanha') { it.snoozeUntil = addDays(today(), 1); toast('Guardado para amanhã. Os dias continuam contando.', true); }
-    if (how === 'solto') { it.status = 'solto'; it.focus = false; toast('Deixado pra lá. Fica no histórico.', true); }
+    if (!byId(id)) return;
+    const c = ctx();
+    const m = how === 'resolvido' ? Casos.resolver(E, id, c) : how === 'amanha' ? Casos.adiar(E, id, c) : how === 'solto' ? Casos.deixarPraLa(E, id, c) : null;
+    if (!m) return;
+    S.undo = { inv: commit(m) };
+    toast({ resolvido: 'Resolvido. Um a menos na cabeça.', amanha: 'Guardado para amanhã. Os dias continuam contando.', solto: 'Deixado pra lá. Fica no histórico.' }[how], true);
     S.expanded = null;
     render();
   }
@@ -1243,11 +1282,8 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       case 'edit': S.editing = el.dataset.id; render('edit-input'); break;
       case 'edit-cancel': S.editing = null; render(); break;
       case 'edit-del': {
-        const pos = S.items.findIndex((i) => i.id === el.dataset.id);
-        if (pos < 0) break;
-        const removido = S.items[pos];
-        S.items.splice(pos, 1);
-        S.undo = { fn: () => { if (!S.items.some((i) => i.id === removido.id)) S.items.splice(Math.min(pos, S.items.length), 0, removido); } };
+        if (!byId(el.dataset.id)) break;
+        S.undo = { inv: commit(Casos.apagar(E, el.dataset.id)) };
         S.editing = null; render(); toast('Anotação apagada.', true);
         break;
       }
@@ -1257,14 +1293,14 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       case 'clear-exit': if (S.tour) S.tour = null; go(S.clear && S.clear.idx > 0 ? 'resumo' : 'anotar'); break;
       case 'pick': { const f = el.dataset.field, v = el.dataset.val; S.clear.sel[f] = norm(S.clear.sel[f]) === norm(v) ? '' : v; render(); break; }
       case 'add': S.clear.adding = el.dataset.field; render('add-form-in'); break;
-      case 'clear-ok': finishItem((it) => { Object.assign(it, { status: 'aberto' }, S.clear.sel); learn(S.clear.sel.person, S.clear.sel.tema); }, 'org'); render(); document.getElementById('main').scrollTop = 0; break;
-      case 'clear-skip': finishItem((it) => { it.status = 'aberto'; }, 'org'); render(); break;
-      case 'clear-res': finishItem((it) => { Object.assign(it, S.clear.sel, { status: 'resolvido', doneDate: today() }); learn(S.clear.sel.person, S.clear.sel.tema); }, 'res'); render(); break;
-      case 'clear-solto': finishItem((it) => { it.status = 'solto'; }, 'solto'); render(); break;
+      case 'clear-ok': finishItem((it) => Casos.organizar(E, it.id, { tipo: S.clear.sel.type, pessoa: S.clear.sel.person, tema: S.clear.sel.tema }, ctx()), 'org'); render(); document.getElementById('main').scrollTop = 0; break;
+      case 'clear-skip': finishItem((it) => Casos.organizar(E, it.id, {}, ctx()), 'org'); render(); break;
+      case 'clear-res': finishItem((it) => { const m1 = Casos.organizar(E, it.id, { tipo: S.clear.sel.type, pessoa: S.clear.sel.person, tema: S.clear.sel.tema }, ctx()); return Casos.unir(m1, Casos.resolver(Casos.aplicar(E, m1), it.id, ctx())); }, 'res'); render(); break;
+      case 'clear-solto': finishItem((it) => Casos.deixarPraLa(E, it.id, ctx()), 'solto'); render(); break;
       case 'clear-undo': {
         const h = S.clear.hist.pop();
         if (!h) return;
-        Object.assign(byId(h.id), h.snap);
+        commit(h.inv);
         S.clear.stats[h.k]--;
         S.clear.idx--;
         loadSel();
@@ -1288,12 +1324,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       case 'do': doAction(el.dataset.id, el.dataset.how); break;
       case 'undo': {
         if (!S.undo) return;
-        if (S.undo.fn) S.undo.fn();
-        else {
-          const it = byId(S.undo.snap.id);
-          if (it) Object.assign(it, S.undo.snap);
-          if (S.undo.taskId) S.tasks = S.tasks.filter((t) => t.id !== S.undo.taskId);
-        }
+        commit(S.undo.inv);
         S.undo = null;
         document.getElementById('toast').hidden = true;
         render();
@@ -1305,17 +1336,8 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       case 'edit-save': {
         const it = byId(S.sheet.id);
         const txt = (document.getElementById('edit-item-text') || {}).value;
-        if (it) { if (txt && txt.trim()) it.text = txt.trim(); it.type = S.editSel.type; it.person = S.editSel.person; it.tema = S.editSel.tema; learn(it.person, it.tema); }
+        if (it) commit(Casos.organizar(E, it.id, { texto: txt, tipo: S.editSel.type, pessoa: S.editSel.person, tema: S.editSel.tema }, ctx()));
         S.sheet = null; render(); toast('Assunto atualizado.');
-        break;
-      }
-      case 'tasks-clean': {
-        const antes = S.tasks.slice();
-        const feitas = antes.filter((t) => t.done).length;
-        if (!feitas) break;
-        S.tasks = antes.filter((t) => !t.done);
-        S.undo = { fn: () => { const ja = new Set(antes.map((t) => t.id)); S.tasks = antes.concat(S.tasks.filter((t) => !ja.has(t.id))); } };
-        render(); toast(feitas === 1 ? 'Tarefa concluída removida.' : `${feitas} tarefas concluídas removidas.`, true);
         break;
       }
       case 'sheet': S.sheet = { kind: el.dataset.kind, person: el.dataset.person }; render(); break;
@@ -1343,7 +1365,8 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       case 'tema-arq': {
         const t = el.dataset.name;
         const arq = S.temasArq.some((a) => norm(a) === norm(t));
-        S.temasArq = arq ? S.temasArq.filter((a) => norm(a) !== norm(t)) : S.temasArq.concat(t);
+        const tid = nomeParaId(E.temas, t);
+        if (tid) commit(Casos.arquivarTema(E, tid, !arq, ctx()));
         S.temaEdit = null; render(); toast(arq ? 'Tema reativado.' : 'Tema arquivado. Os assuntos continuam no histórico.');
         break;
       }
@@ -1353,7 +1376,13 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       case 'import-cancel': S.pendingImport = null; render(); break;
       case 'reset':
         if (!S.confirmReset) { S.confirmReset = true; render(); return; }
-        await dbClear();
+        await fila.catch(() => {});
+        try { if (dbPromise) (await dbPromise).close(); } catch (e) { /* já estava fechado */ }
+        dbPromise = null;
+        await Arm.apagarBancos(DB);
+        try { localStorage.removeItem('clarea-estado'); } catch (e) { /* nada */ }
+        try { DB = await Arm.abrir(); } catch (e) { DB = null; }
+        E = estadoVazio(); Ereal = null;
         ultimaChave = null;
         if (canal) canal.postMessage({ tipo: 'apagado' });
         S = Object.assign(fresh(), { theme: S.theme });
@@ -1370,8 +1399,8 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       const inp = document.getElementById('new-line');
       if (addItem(inp.value)) { inp.value = ''; render('new-line'); }
     } else if (f.id === 'edit-form') {
-      const it = byId(f.dataset.id), v = document.getElementById('edit-input').value.trim();
-      if (it && v) it.text = v;
+      const v = document.getElementById('edit-input').value.trim();
+      if (byId(f.dataset.id) && v) commit(Casos.editarTexto(E, f.dataset.id, v, ctx()));
       S.editing = null; render();
     } else if (f.id === 'add-form') {
       const v = document.getElementById('add-form-in').value.trim();
@@ -1406,7 +1435,6 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   });
   document.addEventListener('change', (e) => {
     const t = e.target;
-    if (t.dataset && t.dataset.task) { const k = S.tasks.find((x) => x.id === t.dataset.task); if (k) k.done = t.checked; render(); }
     if (t.id === 'hora-in' || t.id === 'perfil-hora') { if (t.value) S.hora = t.value; S.lastNotified = ''; if (t.id === 'perfil-hora') toast(`Clarear o dia às ${horaLabel(S.hora)}.`); persist(); }
     if (t.id === 'perfil-nome') { const v = t.value.trim(); if (v) { S.name = v; persist(); } }
     if (t.id === 'file-in' && t.files && t.files[0]) { onImportFile(t.files[0]); t.value = ''; }
@@ -1422,13 +1450,30 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
      21. Início
      ========================================================= */
   async function boot() {
-    const saved = await dbGet();
-    if (saved) applyData(saved);
-    ultimaChave = chaveDe(snapshot());
+    try { DB = await Arm.abrir(); } catch (e) { DB = null; }
+    try {
+      const antigo = await dbGet();
+      if (DB) {
+        if (antigo && !(await DB.meta.get('migracao'))) await Arm.importarV1(DB, limparCopia(antigo), ctx());
+        E = await Arm.lerEstado(DB);
+        if (await DB.meta.get('config')) aplicarConfig(E.config);
+        commit(Casos.acordar(E, ctx()));
+      } else if (antigo) {
+        E = migrarParaV2(limparCopia(antigo), ctx()); // sem banco novo: usa os dados antigos só em memória
+        aplicarConfig(E.config);
+        avisarSemBanco();
+      }
+    } catch (e) {
+      DB = null; E = estadoVazio();
+      toast('Não consegui abrir os dados guardados. Seus dados antigos continuam no aparelho.');
+    }
+    visao();
+    ultimaChave = JSON.stringify(configDeS());
     S.screen = S.onboarded ? 'hoje' : 'boas-vindas';
     const params = new URLSearchParams(location.search);
     if (S.onboarded && params.get('tela') === 'anotar') S.screen = 'anotar';
     render(S.screen === 'anotar' ? 'new-line' : null);
+    document.body.dataset.pronto = '1'; // o app terminou de abrir (usado pelos testes)
     checkReminder();
     setInterval(checkReminder, 30000);
     if (navigator.storage && navigator.storage.persist) { navigator.storage.persist().catch(() => { /* sem garantia extra, segue normal */ }); }
