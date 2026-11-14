@@ -1,4 +1,4 @@
-# Clarea · versão 1.0.6
+# Clarea · versão 1.0.7
 
 > Escreva como pensa. O Clarea organiza no fim do dia.
 
@@ -52,8 +52,12 @@ feat: MVP do Clarea como app instalável (Anotar, Clarear o dia, Hoje)
 ## Como publicar uma atualização
 
 1. Altere os arquivos.
-2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.6`). Um teste automático avisa se algum ficar diferente.
+2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.7`). Um teste automático avisa se algum ficar diferente.
 3. Envie para o GitHub. Quem já tem o app instalado recebe a versão nova ao abrir o app (às vezes é preciso fechar e abrir de novo).
+
+## O que mudou na 1.0.7
+
+- Sem mudança visível. Entraram os casos de uso do modelo 2.0 (`src/casos.js`: anotar, organizar, resolver, adiar, deixar pra lá, foco, apagar, renomear/juntar pessoa e tema, desfazer), identificadores UUID (`src/id.js`), os campos de dia local (`created_day`, `completed_day`) e a gravação por mudança no armazenamento (banco `clarea-v2` passa à versão 2, com atualização testada). Ainda **não estão ligados ao app**: a ligação é a E1.4b (D-012).
 
 ## O que mudou na 1.0.6
 

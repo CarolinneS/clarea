@@ -1,6 +1,6 @@
 /* Service worker do Clarea: guarda o app no aparelho para funcionar sem internet.
    Ao mudar qualquer arquivo do app, aumente o número da versão abaixo. */
-const VERSAO = 'clarea-1.0.6';
+const VERSAO = 'clarea-1.0.7';
 
 // Sem estes arquivos o app não abre offline. Se algum faltar, a instalação falha de propósito.
 const ESSENCIAIS = [
@@ -12,6 +12,8 @@ const ESSENCIAIS = [
   './src/foco.js',
   './src/textos.js',
   './src/modelo.js',
+  './src/id.js',
+  './src/casos.js',
   './src/migracao.js',
   './src/armazenamento.js',
   './vendor/dexie.mjs'
