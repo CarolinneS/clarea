@@ -1,0 +1,95 @@
+{
+ "app": "clarea",
+ "v": 1,
+ "name": "Pessoa Fictícia",
+ "hora": "18:00",
+ "dias": [
+  true,
+  true,
+  true,
+  true,
+  true,
+  false,
+  false
+ ],
+ "atrapalha": [
+  0,
+  2
+ ],
+ "lembrete": false,
+ "theme": "light",
+ "onboarded": true,
+ "welcomed": true,
+ "tips": {
+  "anotar": true
+ },
+ "lastBackup": "2026-11-01",
+ "lastNotified": "",
+ "items": [
+  {
+   "id": "d1",
+   "text": "Sem data de criação",
+   "created": "",
+   "status": "aberto",
+   "type": "fazer",
+   "person": "",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "d2",
+   "text": "Concluído sem data",
+   "created": "2026-11-10",
+   "status": "resolvido",
+   "type": "fazer",
+   "person": "",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "d3",
+   "text": "Adiado para hoje",
+   "created": "2026-11-10",
+   "status": "aberto",
+   "type": "fazer",
+   "person": "",
+   "tema": "",
+   "snoozeUntil": "2026-11-14",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "d4",
+   "text": "Tipo desconhecido",
+   "created": "2026-11-10",
+   "status": "aberto",
+   "type": "",
+   "person": "",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "d5",
+   "text": "Texto com <b>HTML</b> & \"aspas\" e emoji 😀",
+   "created": "2026-11-10",
+   "status": "resolvido",
+   "type": "fazer",
+   "person": "",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "2026-11-14",
+   "focus": false
+  }
+ ],
+ "tasks": [],
+ "people": [],
+ "temas": [],
+ "temasArq": [],
+ "savedAt": "2026-11-13T12:00:00.000Z"
+}

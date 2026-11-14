@@ -1,0 +1,161 @@
+{
+ "app": "clarea",
+ "v": 1,
+ "name": "Pessoa Fictícia",
+ "hora": "18:00",
+ "dias": [
+  true,
+  true,
+  true,
+  true,
+  true,
+  false,
+  false
+ ],
+ "atrapalha": [
+  0,
+  2
+ ],
+ "lembrete": false,
+ "theme": "light",
+ "onboarded": true,
+ "welcomed": true,
+ "tips": {
+  "anotar": true
+ },
+ "lastBackup": "2026-11-01",
+ "lastNotified": "",
+ "items": [
+  {
+   "id": "a1",
+   "text": "Escrever a autoavaliação",
+   "created": "2026-11-10",
+   "status": "aberto",
+   "type": "fazer",
+   "person": "",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "a2",
+   "text": "Aguardando retorno do contrato com @Marina",
+   "created": "2026-11-10",
+   "status": "aberto",
+   "type": "esperando",
+   "person": "Marina",
+   "tema": "Financeiro",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": true
+  },
+  {
+   "id": "a3",
+   "text": "Cobrar o relatório do Paulo",
+   "created": "2026-11-05",
+   "status": "aberto",
+   "type": "retomar",
+   "person": "Paulo",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "a4",
+   "text": "Confirmar a data da reunião",
+   "created": "2026-11-10",
+   "status": "aberto",
+   "type": "confirmar",
+   "person": "",
+   "tema": "RH",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "a5",
+   "text": "Conversar sobre férias",
+   "created": "2026-11-10",
+   "status": "aberto",
+   "type": "conversar",
+   "person": "Paulo",
+   "tema": "",
+   "snoozeUntil": "2026-11-20",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "a6",
+   "text": "Ideia solta de anotar",
+   "created": "2026-11-10",
+   "status": "novo",
+   "type": "",
+   "person": "",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "a7",
+   "text": "Enviar planilha",
+   "created": "2026-11-10",
+   "status": "resolvido",
+   "type": "fazer",
+   "person": "Marina",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "2026-11-12",
+   "focus": false
+  },
+  {
+   "id": "a8",
+   "text": "Comprar presente",
+   "created": "2026-11-10",
+   "status": "solto",
+   "type": "fazer",
+   "person": "",
+   "tema": "",
+   "snoozeUntil": "",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "a9",
+   "text": "Aguardando banco",
+   "created": "2026-11-10",
+   "status": "aberto",
+   "type": "esperando",
+   "person": "",
+   "tema": "",
+   "snoozeUntil": "2026-11-18",
+   "doneDate": "",
+   "focus": false
+  },
+  {
+   "id": "a10",
+   "text": "Já voltou do adiamento",
+   "created": "2026-11-10",
+   "status": "aberto",
+   "type": "fazer",
+   "person": "",
+   "tema": "",
+   "snoozeUntil": "2026-11-01",
+   "doneDate": "",
+   "focus": false
+  }
+ ],
+ "tasks": [],
+ "people": [
+  "Marina",
+  "Paulo"
+ ],
+ "temas": [
+  "Financeiro",
+  "RH"
+ ],
+ "temasArq": [],
+ "savedAt": "2026-11-13T12:00:00.000Z"
+}

@@ -1,0 +1,34 @@
+{
+ "app": "clarea",
+ "v": 1,
+ "name": "Pessoa Fictícia",
+ "hora": "18:00",
+ "dias": [
+  true,
+  true,
+  true,
+  true,
+  true,
+  false,
+  false
+ ],
+ "atrapalha": [
+  0,
+  2
+ ],
+ "lembrete": false,
+ "theme": "light",
+ "onboarded": true,
+ "welcomed": true,
+ "tips": {
+  "anotar": true
+ },
+ "lastBackup": "2026-11-01",
+ "lastNotified": "",
+ "items": [],
+ "tasks": [],
+ "people": [],
+ "temas": [],
+ "temasArq": [],
+ "savedAt": "2026-11-13T12:00:00.000Z"
+}
