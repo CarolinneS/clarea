@@ -194,7 +194,7 @@ input:focus, select:focus { border-color: var(--ring); }
 .two .btn { min-height: 48px; font-size: 16px; }
 .good-text { color: var(--good); }
 
-.lens-card { display: flex; align-items: center; gap: 18px; padding: 18px; border-radius: 24px; background: var(--surface); border: 1px solid var(--line); }
+.lens-card { display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: 20px; background: var(--surface); border: 1px solid var(--line); }
 .lens-card svg { flex-shrink: 0; }
 .ring-fill { transition: stroke-dashoffset .9s ease; }
 .lens-title { font-size: 19px; font-weight: 700; line-height: 1.25; }
@@ -202,8 +202,14 @@ input:focus, select:focus { border-color: var(--ring); }
 .focus { padding: 0; overflow: hidden; }
 .focus-head { width: 100%; text-align: left; background: none; border: none; padding: 16px; display: flex; gap: 12px; align-items: flex-start; }
 .focus-text { font-size: 17px; font-weight: 700; line-height: 1.35; }
-.actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 0 16px 8px; }
-.act { min-height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 13px; line-height: 1.15; padding: 0 4px; }
+.focus.open .focus-text { font-size: 18px; }
+.hoje-h1 { font-size: 26px; }
+.sec-title { font-size: 20px; font-weight: 700; line-height: 1.2; }
+.focus-chev { flex-shrink: 0; align-self: center; color: var(--muted); }
+.focus-chev svg { transition: transform .15s; } .focus.open .focus-chev svg { transform: rotate(180deg); }
+.tip-line { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
+.actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 0 16px 8px; }
+.act { min-height: 48px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; line-height: 1.15; padding: 0 4px; white-space: nowrap; }
 .act.good { background: var(--good-soft); color: var(--good); border-color: transparent; font-weight: 700; }
 .act.soft { color: var(--muted); }
 .people { display: flex; gap: 14px; overflow-x: auto; padding: 4px 2px; }
@@ -287,7 +293,7 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
 <script>
 (function () {
   'use strict';
-  const VERSAO = '1.0.2';
+  const VERSAO = '1.0.3';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -310,8 +316,7 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
   const lens = (size, pct, id) => `<svg width="${size}" height="${size}" viewBox="0 0 112 112" role="img" aria-label="Seu dia está ${Math.round(pct * 100)}% claro">
       <circle cx="56" cy="56" r="46" fill="none" style="stroke:var(--ring-track)" stroke-width="12"/>
       <circle ${id ? `id="${id}"` : ''} class="ring-fill" cx="56" cy="56" r="46" fill="none" style="stroke:var(--ring)" stroke-width="12" stroke-linecap="round" stroke-dasharray="${CIRC}" stroke-dashoffset="${CIRC * (1 - pct)}" transform="rotate(-90 56 56)"/>
-      <circle cx="70" cy="40" r="9" style="fill:var(--dot)"/>
-      <text x="56" y="66" text-anchor="middle" font-size="25" font-weight="700" style="fill:var(--text);font-family:var(--font)">${Math.round(pct * 100)}%</text></svg>`;
+      <text x="56" y="66" text-anchor="middle" font-size="27" font-weight="700" style="fill:var(--text);font-family:var(--font)">${Math.round(pct * 100)}%</text></svg>`;
 
   /* =========================================================
      2. Utilidades de texto e data
@@ -787,8 +792,9 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
     hoje: 'Este é o seu Hoje. Toque num assunto do foco para ver as ações. Em “Mudar”, você troca o foco quando quiser.',
     historico: 'Tudo o que passou pelo Clarea fica aqui. Em “Números”, você vê o que costuma demorar mais.'
   };
-  function tipCard(key) {
+  function tipCard(key, quiet) {
     if (S.tips[key] || S.tour || S.ver || S.demo || !TIPS[key]) return '';
+    if (quiet) return `<p class="tip-line"><span>${TIPS[key]}</span><button class="link quiet" data-act="tip-ok" data-key="${key}" style="min-height:32px">Entendi</button></p>`;
     return `<div class="soft tip"><span style="color:var(--primary);flex-shrink:0">${IC.light}</span><div class="stack-s grow"><p>${TIPS[key]}</p><button class="link" data-act="tip-ok" data-key="${key}" style="align-self:flex-start;min-height:32px">Entendi</button></div></div>`;
   }
   const demoBar = () => (S.demo ? `<div class="soft demo-bar row between" style="padding:12px 14px"><span class="small"><strong>Demonstração.</strong> Dados inventados, nada é salvo.</span><button class="btn-s primary" data-act="demo-end">Sair</button></div>` : '');
@@ -910,15 +916,16 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
      ========================================================= */
   function actionsFor(i) {
     return `<div class="actions"><button class="act good" data-act="do" data-how="resolvido" data-id="${i.id}">Resolvido</button>
-      <button class="act" data-act="do" data-how="tarefa" data-id="${i.id}">Virar tarefa</button>
       <button class="act" data-act="do" data-how="amanha" data-id="${i.id}">Amanhã</button>
       <button class="act soft" data-act="do" data-how="solto" data-id="${i.id}">Deixar pra lá</button></div>
-      <div style="padding:0 16px 12px"><button class="link quiet" data-act="item-edit" data-id="${i.id}" style="min-height:36px;font-size:14px">Editar tipo, pessoa ou tema</button></div>`;
+      <div class="row" style="padding:0 16px 12px;gap:12px"><button class="link quiet" data-act="do" data-how="tarefa" data-id="${i.id}" style="min-height:36px;font-size:14px">Virar tarefa</button>
+        <button class="link quiet" data-act="item-edit" data-id="${i.id}" style="min-height:36px;font-size:14px">Editar</button></div>`;
   }
   function itemCard(i) {
     const open = S.expanded === i.id;
-    return `<li class="card focus"><button class="focus-head" data-act="expand" data-id="${i.id}" aria-expanded="${open}">${ava(i.person)}
-        <span class="stack-s" style="gap:6px;min-width:0"><span class="focus-text">${esc(i.text)}</span><span class="meta">${tp(i.type)}${ageTag(i)}${i.tema ? `<span>${esc(i.tema)}</span>` : ''}</span></span></button>
+    return `<li class="card focus ${open ? 'open' : ''}"><button class="focus-head" data-act="expand" data-id="${i.id}" aria-expanded="${open}">
+        <span class="stack-s grow" style="gap:6px;min-width:0"><span class="focus-text">${esc(i.text)}</span><span class="meta">${tp(i.type)}${i.person ? `<span>${esc(i.person)}</span>` : ''}${ageTag(i)}${i.tema ? `<span>${esc(i.tema)}</span>` : ''}</span></span>
+        <span class="focus-chev" aria-hidden="true">${IC.chev || ''}</span></button>
       ${open ? actionsFor(i) : ''}</li>`;
   }
   function backupNudge() {
@@ -943,14 +950,13 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
         <button class="btn-s primary" data-act="tour-end" style="align-self:flex-end">Concluir</button></div>` : '';
     const quiet = S.tour === 3 || S.ver;
     const doneTasks = S.tasks.filter((t) => t.done).length;
-    return `${demoBar()}<header class="row between"><div class="stack-s" style="gap:2px"><span class="small muted">${dateLong()}</span><h1>${greeting()}${S.name ? ', ' + esc(S.name) : ''}</h1></div>
+    return `${demoBar()}<header class="row between"><div class="stack-s" style="gap:2px"><span class="small muted">${dateLong()}</span><h1 class="hoje-h1">${greeting()}${S.name ? ', ' + esc(S.name) : ''}</h1></div>
         <button class="me ${S.tour === 3 ? 'glow' : ''}" data-act="go" data-to="perfil" aria-label="Perfil e configurações">${esc(myInitial())}</button></header>
-      ${tipCard('hoje')}
       <div class="lens-card">${lens(108, pct)}<div class="stack-s" style="gap:6px;min-width:0"><div class="lens-title">${title}</div><p class="small muted">${sub}</p></div></div>
       ${ns && !quiet ? `<div class="soft stack-s"><p>Você tem ${plural(ns, 'anotação', 'anotações')} para clarear.</p><button class="btn-s primary" data-act="clear-intro" style="align-self:flex-start">Clarear o dia</button></div>` : ''}
       ${obs && !quiet ? `<div class="soft row" style="align-items:flex-start">${obs.person ? ava(obs.person) : logo(32, true)}<div class="stack-s"><p>${esc(obs.text)}</p>${obs.person ? `<button class="btn-s primary" data-act="sheet" data-kind="pauta" data-person="${esc(obs.person)}" style="align-self:flex-start">Pauta com ${esc(obs.person)}</button>` : ''}</div></div>` : ''}
       ${tour3}
-      ${foco.length ? `<div class="row between"><span class="row" style="gap:8px"><span class="label">Foco de hoje</span><span class="tp ${F.chosen ? 'esperando' : 'fazer'}" style="font-size:12px">${F.chosen ? 'escolhido por você' : 'sugerido'}</span></span><button class="link" data-act="foco-open" style="min-height:36px">Mudar</button></div>
+      ${foco.length ? `<div class="row between"><span class="row" style="gap:8px"><h2 class="sec-title" style="margin:0">Foco de hoje</h2>${F.chosen ? '' : '<span class="small muted">sugerido</span>'}</span><button class="link" data-act="foco-open" style="min-height:36px">Mudar</button></div>
         <ul class="focus-list">${foco.map(itemCard).join('')}</ul>` : ''}
       ${gd ? `<p class="small muted">${plural(gd, 'assunto guardado', 'assuntos guardados')} para amanhã.</p>` : ''}
       ${Object.keys(per).length || semPessoa ? `<span class="label">Por pessoa</span><div class="people">
@@ -959,7 +965,8 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
       ${S.tasks.length ? `<div class="row between"><span class="label">Tarefas</span>${doneTasks ? `<button class="link quiet" data-act="tasks-clean" style="min-height:36px">Limpar concluídas (${doneTasks})</button>` : ''}</div>
         <ul class="tasks card" style="padding:4px 16px">${S.tasks.map((t) => `<li class="${t.done ? 'done' : ''}"><label><input type="checkbox" data-task="${t.id}" ${t.done ? 'checked' : ''}><span>${esc(t.text)}</span></label></li>`).join('')}</ul>` : ''}
       ${quiet ? '' : backupNudge()}
-      ${S.items.length ? `<button class="link" data-act="sheet" data-kind="semana" style="align-self:center">Resumo da semana</button>` : ''}`;
+      ${S.items.length ? `<button class="link" data-act="sheet" data-kind="semana" style="align-self:center">Resumo da semana</button>` : ''}
+      ${tipCard('hoje', true)}`;
   }
 
   /* =========================================================
