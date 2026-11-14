@@ -22,7 +22,7 @@ test('o texto em digitação no Anotar sobrevive a sair do app e voltar', async 
 test('o texto editado em "Editar assunto" não some ao tocar num tipo, pessoa ou tema', async () => {
   const { contexto, pagina } = await novaPagina(amb, estadoBase([assunto('Texto antigo', { focus: true })]));
   await pagina.goto(amb.url);
-  await pagina.click('text=Editar tipo, pessoa ou tema');
+  await pagina.click('.focus button:text-is("Editar")');
   await pagina.fill('#edit-item-text', 'Texto novo editado');
   await pagina.click('.sheet button.chip:has-text("Confirmar")');
   assert.equal(await pagina.inputValue('#edit-item-text'), 'Texto novo editado');
