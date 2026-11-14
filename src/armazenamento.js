@@ -19,6 +19,13 @@ export async function abrir(nome = NOME_BANCO) {
     copias: 'id, criada_em',
     meta: 'chave'
   });
+  // Versão 2 (E1.4a): índices pelos dias locais e pela data de retomada. Assuntos gravados antes ganham os campos de dia.
+  db.version(2).stores({
+    assuntos: 'id, status, person_id, topic_id, updated_at, ordem, created_day, completed_day, resume_at'
+  }).upgrade((tx) => tx.table('assuntos').toCollection().modify((a) => {
+    if (!a.created_day) a.created_day = String(a.created_at || '').slice(0, 10);
+    if (a.completed_day === undefined) a.completed_day = a.completed_at ? String(a.completed_at).slice(0, 10) : null;
+  }));
   await db.open();
   return db;
 }
@@ -85,3 +92,18 @@ export async function gravarConfig(db, config) {
 
 /** Cópias integrais dos dados 1.0 feitas antes da migração, da mais recente para a mais antiga. */
 export const copiasV1 = (db) => db.copias.orderBy('criada_em').reverse().toArray();
+
+/**
+ * Grava uma mudança dos casos de uso (src/casos.js) numa única transação: ou tudo entra, ou nada entra.
+ * Mexe só nos registros citados; os demais assuntos não são tocados.
+ */
+export async function aplicarMudanca(db, m) {
+  await db.transaction('rw', [db.assuntos, db.pessoas, db.temas], async () => {
+    if (m.pessoas.length) await db.pessoas.bulkPut(m.pessoas);
+    if (m.temas.length) await db.temas.bulkPut(m.temas);
+    if (m.assuntos.length) await db.assuntos.bulkPut(m.assuntos);
+    if (m.removerAssuntos.length) await db.assuntos.bulkDelete(m.removerAssuntos);
+    if (m.removerPessoas.length) await db.pessoas.bulkDelete(m.removerPessoas);
+    if (m.removerTemas.length) await db.temas.bulkDelete(m.removerTemas);
+  });
+}

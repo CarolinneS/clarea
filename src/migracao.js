@@ -3,7 +3,7 @@
 // `hoje` e `agora`, sempre gera o mesmo resultado, e o objeto de entrada nunca é alterado.
 // Nada é descartado: o que o modelo 2.0 não tem lugar para guardar fica em `legado`.
 import { norm } from './util.js';
-import { VERSAO_MODELO, estadoVazio } from './modelo.js';
+import { VERSAO_MODELO, estadoVazio, novoAssunto } from './modelo.js';
 
 const ACAO_POR_TIPO = { retomar: 'chase', confirmar: 'check', conversar: 'talk', fazer: 'do' }; // 'esperando' não tem ação própria (D-010)
 const meioDia = (dia) => `${dia}T12:00:00.000Z`; // data antiga só tinha o dia: usamos o meio-dia em UTC como aproximação
@@ -72,37 +72,32 @@ export function migrarParaV2(v1, ctx) {
   const itemIds = new Set(itens.filter((i) => texto(i.id)).map((i) => i.id));
   const usadas = new Set(); // tarefas absorvidas por um assunto existente
 
-  const novoAssunto = (campos) => ({
-    id: '', original_text: '', text: '', created_at: agora, updated_at: agora, status: 'inbox', next_action: null,
-    person_id: null, topic_id: null, due_at: null, reminder_at: null, resume_at: null, source: 'migration',
-    ai_suggestion: null, ai_confidence: null, confirmed_at: null, completed_at: null, archived_at: null, deleted_at: null,
-    focus: false, ordem: 0, local_version: 1, server_version: null, legado: null, ...campos
-  });
-
   let ordem = 0; // posição na lista antiga: preserva a ordem em que os assuntos foram criados
   itens.forEach((i) => {
     const t = texto(i.text);
     if (!texto(i.id) || !t.trim()) return;
     const criado = ehData(i.created) ? meioDia(i.created) : agora;
+    const diaCriado = ehData(i.created) ? i.created : hoje;
     const pe = pessoas.obter(i.person), te = temas.obter(i.tema);
     const tarefa = i.status === 'tarefa' ? tarefaDoItem.get(i.id) : null;
     if (tarefa) usadas.add(tarefa);
     const acao = ACAO_POR_TIPO[i.type] || null;
     const adiado = ehData(i.snoozeUntil) && i.snoozeUntil > hoje ? i.snoozeUntil : null;
     const a = novoAssunto({
-      id: i.id, original_text: t, text: t, created_at: criado, updated_at: criado, ordem: ordem++,
+      id: i.id, original_text: t, text: t, created_at: criado, updated_at: criado, created_day: diaCriado, source: 'migration', ordem: ordem++,
       person_id: pe ? pe.id : null, topic_id: te ? te.id : null,
       legado: { status: texto(i.status), type: texto(i.type), person: texto(i.person), tema: texto(i.tema), snoozeUntil: texto(i.snoozeUntil), doneDate: texto(i.doneDate), created: texto(i.created), focus: i.focus === true }
     });
     const fim = ehData(i.doneDate) ? meioDia(i.doneDate) : criado;
+    const diaFim = ehData(i.doneDate) ? i.doneDate : diaCriado;
     switch (i.status) {
       case 'novo': a.status = 'inbox'; break;
-      case 'resolvido': a.status = 'done'; a.next_action = acao; a.completed_at = fim; a.updated_at = fim; break;
+      case 'resolvido': a.status = 'done'; a.next_action = acao; a.completed_at = fim; a.completed_day = diaFim; a.updated_at = fim; break;
       case 'solto': a.status = 'discarded'; break;
       case 'tarefa':
         // D-009: tarefa pendente vira assunto em andamento com ação Fazer; concluída (ou já limpa da lista) vira concluído.
         if (tarefa && tarefa.done !== true) { a.status = 'in_progress'; a.next_action = 'do'; a.updated_at = fim; }
-        else { a.status = 'done'; a.next_action = acao; a.completed_at = fim; a.updated_at = fim; }
+        else { a.status = 'done'; a.next_action = acao; a.completed_at = fim; a.completed_day = diaFim; a.updated_at = fim; }
         break;
       default: // 'aberto'
         if (i.type === 'esperando') { a.status = 'waiting'; a.resume_at = adiado; }
@@ -120,12 +115,13 @@ export function migrarParaV2(v1, ctx) {
     const tx = texto(t.text);
     if (!texto(t.id) || !tx.trim()) return;
     const criado = ehData(t.created) ? meioDia(t.created) : agora;
+    const diaCriado = ehData(t.created) ? t.created : hoje;
     let id = `t_${t.id}`;
     while (ids.has(id)) id += '_';
     ids.add(id);
     const feito = t.done === true;
     out.assuntos.push(novoAssunto({
-      id, original_text: tx, text: tx, created_at: criado, updated_at: criado, ordem: ordem++, status: feito ? 'done' : 'in_progress', next_action: 'do', completed_at: feito ? criado : null,
+      id, original_text: tx, text: tx, created_at: criado, updated_at: criado, created_day: diaCriado, source: 'migration', ordem: ordem++, status: feito ? 'done' : 'in_progress', next_action: 'do', completed_at: feito ? criado : null, completed_day: feito ? diaCriado : null,
       legado: { tarefa: { id: t.id, text: tx, done: feito, created: texto(t.created), itemId: texto(t.itemId), itemExistia: itemIds.has(t.itemId) } }
     }));
   });

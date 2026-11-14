@@ -25,6 +25,16 @@ export function estadoVazio() {
   };
 }
 
+/** Assunto novo com todos os campos nos valores iniciais. `campos` sobrescreve. Usado pela migração e pelos casos de uso. */
+export function novoAssunto(campos) {
+  return {
+    id: '', original_text: '', text: '', created_at: '', updated_at: '', created_day: '', completed_day: null,
+    status: 'inbox', next_action: null, person_id: null, topic_id: null, due_at: null, reminder_at: null, resume_at: null,
+    source: 'manual', ai_suggestion: null, ai_confidence: null, confirmed_at: null, completed_at: null, archived_at: null,
+    deleted_at: null, focus: false, ordem: 0, local_version: 1, server_version: null, legado: null, ...campos
+  };
+}
+
 const ehIso = (v) => typeof v === 'string' && !Number.isNaN(Date.parse(v));
 const ehIsoOuNulo = (v) => v === null || ehIso(v);
 const ehData = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
@@ -60,9 +70,12 @@ export function validar(est) {
     if (a.topic_id !== null && !temas.has(a.topic_id)) e(`${w}: tema inexistente (${a.topic_id})`);
     if (!ehIso(a.created_at)) e(`${w}: created_at inválido`);
     if (!ehIso(a.updated_at)) e(`${w}: updated_at inválido`);
+    if (!ehData(a.created_day)) e(`${w}: created_day deve ser AAAA-MM-DD`);
+    if (a.completed_day !== null && !ehData(a.completed_day)) e(`${w}: completed_day deve ser AAAA-MM-DD`);
     for (const k of ['completed_at', 'archived_at', 'deleted_at', 'confirmed_at', 'due_at', 'reminder_at']) if (!ehIsoOuNulo(a[k])) e(`${w}: ${k} inválido`);
     if (a.resume_at !== null && !ehData(a.resume_at)) e(`${w}: resume_at deve ser AAAA-MM-DD`);
     if (a.status === 'done' && !a.completed_at) e(`${w}: concluído sem completed_at`);
+    if (a.status === 'done' && !a.completed_day) e(`${w}: concluído sem completed_day`);
     if (!Number.isInteger(a.ordem)) e(`${w}: ordem deve ser um número inteiro`);
     if (typeof a.focus !== 'boolean') e(`${w}: focus deve ser verdadeiro ou falso`);
     if (!ORIGENS.includes(a.source)) e(`${w}: origem inválida (${a.source})`);
