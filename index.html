@@ -290,10 +290,14 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
 <div id="toast" class="toast" hidden role="status" aria-live="polite"></div>
 <input type="file" id="file-in" accept=".json,application/json" hidden>
 
-<script>
+<script type="module">
+import { TYPES, typeLabel, esc, norm, cap, plural, iso, addDays, diffDays, ageOf as ageOfEm, ageText, ageCls, horaLabel, dateShort as dateShortEm, initials, avaCls, fmt1 } from './src/util.js';
+import { suggest as suggestPuro } from './src/sugestao.js';
+import { score as scorePuro, bySuggestion as bySuggestionPuro, focusList as focusListPuro, dayPct as dayPctPuro, doneToday as doneTodayPuro } from './src/foco.js';
+import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation as observationPuro } from './src/textos.js';
 (function () {
   'use strict';
-  const VERSAO = '1.0.3';
+  const VERSAO = '1.0.4';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -321,33 +325,17 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
   /* =========================================================
      2. Utilidades de texto e data
      ========================================================= */
-  const TYPES = [['esperando', 'Esperando'], ['retomar', 'Retomar'], ['confirmar', 'Confirmar'], ['conversar', 'Conversar'], ['fazer', 'Fazer']];
-  const typeLabel = (k) => (TYPES.find((t) => t[0] === k) || [])[1] || '';
-  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
-  const cap = (s) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : s);
-  const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
   const nid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
-  const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const today = () => iso(new Date());
-  const addDays = (s, n) => { const [y, m, d] = s.split('-').map(Number); return iso(new Date(y, m - 1, d + n)); };
-  const diffDays = (a, b) => { const [y1, m1, d1] = a.split('-').map(Number), [y2, m2, d2] = b.split('-').map(Number); return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 864e5); };
-  const ageOf = (i) => Math.max(0, diffDays(i.created, today()));
-  const ageText = (a) => (a <= 0 ? 'hoje' : a === 1 ? 'há 1 dia' : `há ${a} dias`);
-  const ageCls = (a) => (a <= 2 ? '' : a <= 4 ? 'w' : 'a');
+  const ageOf = (i) => ageOfEm(i, today());
   const ageTag = (i) => { const a = ageOf(i); return `<span class="age ${ageCls(a)}">● ${ageText(a)}</span>`; };
-  const horaLabel = (h) => { const [hh, mm] = (h || '18:00').split(':'); return mm === '00' ? `${Number(hh)}h` : `${Number(hh)}h${mm}`; };
   const dateLong = () => new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
-  const dateShort = (s) => { const [y, m, d] = (s || today()).split('-'); return `${d}/${m}`; };
+  const dateShort = (s) => dateShortEm(s, today());
   const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite'; };
-  const initials = (n) => norm(n).replace(/[^a-z]/g, '').slice(0, 2).toUpperCase() || '·';
   const myInitial = () => (initials(S.name || 'Você')[0] || 'V');
-  const avaCls = (n) => { let h = 0; for (const c of norm(n)) h = (h * 31 + c.charCodeAt(0)) % 997; return 'c' + (h % 3); };
   const ava = (n, big) => (n ? `<span class="ava ${avaCls(n)} ${big ? 'lg' : ''}" aria-hidden="true">${initials(n)}</span>` : `<span class="ava none" aria-hidden="true">·</span>`);
   const tp = (k) => (k ? `<span class="tp ${k}">${typeLabel(k)}</span>` : '');
-  const fmt1 = (n) => n.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
-
   /* =========================================================
      3. Estado
      Tudo o que está em PERSIST é guardado no aparelho (IndexedDB).
@@ -372,8 +360,8 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
   const visiveis = () => abertos().filter((i) => !isSnoozed(i));
   const guardados = () => abertos().filter(isSnoozed);
   const byId = (id) => S.items.find((i) => i.id === id);
-  const doneToday = () => S.items.filter((i) => i.doneDate === today() && (i.status === 'resolvido' || i.status === 'tarefa')).length;
-  const dayPct = () => { const d = doneToday(), o = visiveis().length; return d + o ? d / (d + o) : 0; };
+  const doneToday = () => doneTodayPuro(S.items, today());
+  const dayPct = () => dayPctPuro(doneToday(), visiveis().length);
   const activeTemas = () => S.temas.filter((t) => !S.temasArq.some((a) => norm(a) === norm(t)));
 
   function addItem(text, extra) {
@@ -530,47 +518,7 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
   /* =========================================================
      5. Sugestões por regras (a IA entra na Fase 3)
      ========================================================= */
-  const STOP = new Set(['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo', 'janeiro', 'fevereiro', 'marco', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro', 'deus']);
-  const TYPE_RULES = [
-    ['esperando', /\b(aguardando|aguardar|esperando|esperar|retorno|resposta)\b/],
-    ['retomar', /\b(cobrar|retomar|lembrar|pedir)\b/],
-    ['confirmar', /\b(confirmar|validar|checar|conferir)\b/],
-    ['conversar', /\b(conversar|falar com|ver com|alinhar)\b/]
-  ];
-  const wordIn = (needle, hay) => new RegExp('(^|[^a-z0-9])' + needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '($|[^a-z0-9])').test(hay);
-  function suggest(text) {
-    const t = norm(text);
-    const r = { type: 'fazer', person: '', tema: '', why: '' };
-    const reasons = [];
-    for (const [k, re] of TYPE_RULES) { const m = t.match(re); if (m) { r.type = k; reasons.push(`pela palavra “${m[1]}”`); break; } }
-    const at = text.match(/@([\p{L}]+)/u);
-    if (at) r.person = S.people.find((p) => norm(p) === norm(at[1])) || cap(at[1]);
-    if (!r.person) r.person = S.people.find((p) => wordIn(norm(p), t)) || '';
-    if (!r.person) {
-      const tit = text.match(/(?:^|\s)(?:Dr|Dra|Sr|Sra|Prof|Profa)\.?\s+(\p{Lu}\p{Ll}+)/u);
-      if (tit) r.person = tit[1];
-    }
-    if (!r.person) {
-      const m = text.match(/(?:^|\s)(?:com|da|do|de|a|o|à|pela|pelo|para|pra)\s+(\p{Lu}\p{Ll}+)(?!\.)/u);
-      if (m && !STOP.has(norm(m[1])) && !S.temas.some((p) => norm(p).split(' ').includes(norm(m[1])))) r.person = m[1];
-    }
-    if (r.person) {
-      const n = S.items.filter((i) => i.status !== 'novo' && norm(i.person) === norm(r.person)).length;
-      reasons.push(n ? `porque ${r.person} já apareceu em ${plural(n, 'item', 'itens')}` : `pelo nome ${r.person} no texto`);
-    }
-    const tag = text.match(/#([\p{L}\d]+)/u);
-    const temas = activeTemas();
-    if (tag) r.tema = temas.find((p) => norm(p).replace(/\s/g, '') === norm(tag[1])) || cap(tag[1]);
-    if (!r.tema) r.tema = temas.find((p) => wordIn(norm(p), t) || norm(p).split(' ').some((w) => w.length > 3 && wordIn(w, t))) || '';
-    if (!r.tema && r.person) {
-      const count = {};
-      S.items.forEach((i) => { if (norm(i.person) === norm(r.person) && i.tema && temas.includes(i.tema)) count[i.tema] = (count[i.tema] || 0) + 1; });
-      const best = Object.keys(count).sort((a, b) => count[b] - count[a])[0];
-      if (best) r.tema = best;
-    }
-    r.why = reasons.length ? 'Sugerido ' + reasons.join(' e ') + '.' : 'Sem pistas no texto: escolha se quiser, ou pule.';
-    return r;
-  }
+  const suggest = (text) => suggestPuro(text, { people: S.people, temas: activeTemas(), temasTodos: S.temas, items: S.items });
 
   /* =========================================================
      6. Exemplo inventado (passeio e demonstração)
@@ -630,14 +578,9 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
     if (S.clear.idx >= S.clear.queue.length) enterFoco();
     else loadSel();
   }
-  const score = (i) => ageOf(i) + (i.type === 'retomar' ? 2 : 0);
-  const bySuggestion = (list) => list.slice().sort((a, b) => score(b) - score(a));
-  function focusList() {
-    const vis = visiveis();
-    const chosen = vis.filter((i) => i.focus);
-    if (chosen.length) return { list: bySuggestion(chosen), chosen: true };
-    return { list: bySuggestion(vis).slice(0, 3), chosen: false };
-  }
+  const score = (i) => scorePuro(i, today());
+  const bySuggestion = (list) => bySuggestionPuro(list, today());
+  const focusList = () => focusListPuro(visiveis(), today());
   function setFocus(ids) { abertos().forEach((i) => { i.focus = ids.includes(i.id); }); }
   function enterFoco() {
     const c = visiveis();
@@ -650,39 +593,9 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
   /* =========================================================
      8. Textos prontos (pauta, resumo) e observações
      ========================================================= */
-  function pautaText(person) {
-    const its = abertos().filter((i) => norm(i.person) === norm(person)).sort((a, b) => ageOf(b) - ageOf(a));
-    const lines = its.map((i) => `• ${i.type ? typeLabel(i.type) + ': ' : ''}${i.text} (${ageText(ageOf(i))})`);
-    return `Pauta com ${person} (${dateShort()})\n\n${lines.join('\n') || 'Nada em aberto com essa pessoa.'}`;
-  }
-  function semanaText() {
-    const desde = addDays(today(), -6);
-    const groups = {};
-    const put = (tema, key, txt) => { const g = (groups[tema || 'Sem tema'] = groups[tema || 'Sem tema'] || { r: [], t: [], s: [] }); g[key].push(txt); };
-    S.items.forEach((i) => {
-      if (i.status === 'resolvido' && i.doneDate >= desde) put(i.tema, 'r', i.text);
-      else if (i.status === 'tarefa' && i.doneDate >= desde) put(i.tema, 't', i.text);
-      else if (i.status === 'aberto') put(i.tema, 's', `${i.text} (${ageText(ageOf(i))})`);
-    });
-    const names = Object.keys(groups).sort((a, b) => (a === 'Sem tema') - (b === 'Sem tema') || a.localeCompare(b));
-    const block = (title, arr) => (arr.length ? `  ${title}:\n${arr.map((x) => `   • ${x}`).join('\n')}\n` : '');
-    const body = names.map((n) => `${n}\n${block('Resolvidos', groups[n].r)}${block('Viraram tarefa', groups[n].t)}${block('Seguindo', groups[n].s)}`).join('\n');
-    return `Resumo da semana (${dateShort(desde)} a ${dateShort()})\n\n${body || 'Nada registrado ainda nesta semana.'}`;
-  }
-  function observation() {
-    const per = {};
-    visiveis().forEach((i) => { if (i.person) (per[i.person] = per[i.person] || []).push(i); });
-    for (const p of Object.keys(per)) {
-      const old = per[p].filter((i) => ageOf(i) >= 4);
-      if (old.length >= 2) {
-        const min = Math.min(...old.map(ageOf));
-        return { text: `Notei que ${old.length} assuntos com ${p} seguem há pelo menos ${min} dias. Que tal juntar tudo numa mensagem só?`, person: p };
-      }
-    }
-    const old = visiveis().filter((i) => ageOf(i) >= 7).sort((a, b) => ageOf(b) - ageOf(a))[0];
-    if (old) return { text: `Notei que “${old.text}” está aqui ${ageText(ageOf(old))}. Ainda faz sentido manter?`, person: '' };
-    return null;
-  }
+  const pautaText = (person) => pautaTextPuro(person, abertos(), today());
+  const semanaText = () => semanaTextPuro(S.items, today());
+  const observation = () => observationPuro(visiveis(), today());
 
   /* =========================================================
      9. Telas do primeiro acesso

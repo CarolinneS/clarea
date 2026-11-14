@@ -4,14 +4,28 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import vm from 'node:vm';
+import { mkdtempSync, writeFileSync, readdirSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { execFileSync } from 'node:child_process';
 
 const raiz = resolve(import.meta.dirname, '../..');
 
 test('script do index.html tem sintaxe válida', () => {
   const html = readFileSync(resolve(raiz, 'index.html'), 'utf8');
-  const partes = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
+  const partes = [...html.matchAll(/<script(?: type="module")?>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
   assert.ok(partes.length >= 1, 'não achei <script> no index.html');
-  partes.forEach((codigo, k) => assert.doesNotThrow(() => new vm.Script(codigo, { filename: `index.html#script${k + 1}` })));
+  const dir = mkdtempSync(resolve(tmpdir(), 'clarea-'));
+  partes.forEach((codigo, k) => {
+    const arq = resolve(dir, `script${k + 1}.mjs`);
+    writeFileSync(arq, codigo);
+    assert.doesNotThrow(() => execFileSync(process.execPath, ['--check', arq], { stdio: 'pipe' }), `index.html#script${k + 1}`);
+  });
+});
+
+test('módulos de src/ têm sintaxe válida', () => {
+  const arqs = readdirSync(resolve(raiz, 'src')).filter((f) => f.endsWith('.js'));
+  assert.ok(arqs.length >= 1);
+  arqs.forEach((f) => assert.doesNotThrow(() => execFileSync(process.execPath, ['--check', resolve(raiz, 'src', f)], { stdio: 'pipe' }), f));
 });
 
 test('sw.js tem sintaxe válida', () => {
