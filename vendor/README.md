@@ -16,3 +16,6 @@ Bibliotecas de terceiros guardadas dentro do repositório, para o app funcionar 
 3. Rode os testes e faça um pull request.
 
 Não edite o arquivo à mão.
+
+### Acompanhamento de segurança
+O Dependabot **não** acompanha esta pasta (a biblioteca não vem do `package.json`). Por isso, a cada três meses, ou ao receber um aviso de segurança sobre o Dexie, confira se existe versão nova ou correção em https://github.com/dexie/Dexie.js/releases e, se houver, siga "Como atualizar".
