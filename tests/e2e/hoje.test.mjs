@@ -69,22 +69,23 @@ test('a saudação usa 26px', async () => {
 
 const novas = (n) => Array.from({ length: n }, (_, k) => assunto(`Anotação ${k + 1}`, { status: 'novo', type: '' }));
 
-test('o Hoje mostra as 3 anotações mais recentes para clarear, sem precisar clarear, e expande', async () => {
+test('o Hoje mostra só a quantidade para clarear; "Ver anotações" abre a lista e "Ocultar anotações" fecha', async () => {
   const { contexto, pagina } = await novaPagina(amb, estadoBase([...novas(5), assunto('Em foco', { focus: true })], { tips: {} }));
   await pagina.goto(amb.url);
-  const cartao = pagina.locator('.soft', { hasText: 'Para clarear' });
-  assert.match(await cartao.innerText(), /para clarear · 5/i);
-  assert.deepEqual(await cartao.locator('button.line span:first-child').allInnerTexts(), ['Anotação 5', 'Anotação 4', 'Anotação 3']);
-  await cartao.locator('[data-act="toggle-novos"]').click();
-  assert.equal(await cartao.locator('button.line').count(), 5);
-  await cartao.locator('[data-act="toggle-novos"]').click();
-  assert.equal(await cartao.locator('button.line').count(), 3);
+  const cartao = pagina.locator('.soft', { hasText: 'para clarear' });
+  assert.match(await cartao.innerText(), /Você tem 5 anotações para clarear/);
+  assert.equal(await cartao.locator('button.line').count(), 0, 'recolhido de início');
+  await cartao.locator('[data-act="toggle-novos"]:text-is("Ver anotações")').click();
+  assert.deepEqual(await cartao.locator('button.line span:first-child').allInnerTexts(), ['Anotação 5', 'Anotação 4', 'Anotação 3', 'Anotação 2', 'Anotação 1'], 'todas, da mais recente à mais antiga');
+  await cartao.locator('[data-act="toggle-novos"]:text-is("Ocultar anotações")').click();
+  assert.equal(await cartao.locator('button.line').count(), 0);
   await contexto.close();
 });
 
-test('no Hoje dá para editar e apagar uma anotação para clarear, e o botão Clarear o dia continua lá', async () => {
+test('com a lista aberta dá para editar e apagar uma anotação, e o botão Clarear o dia continua lá', async () => {
   const { contexto, pagina } = await novaPagina(amb, estadoBase([...novas(2), assunto('Em foco', { focus: true })]));
   await pagina.goto(amb.url);
+  await pagina.click('[data-act="toggle-novos"]');
   await pagina.click('button.line:has-text("Anotação 2")');
   await pagina.fill('#edit-input', 'Anotação 2 corrigida');
   await pagina.click('#edit-form button[type="submit"]');

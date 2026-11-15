@@ -1,4 +1,4 @@
-# Clarea · versão 1.0.9
+# Clarea · versão 1.0.10
 
 > Escreva como pensa. O Clarea organiza no fim do dia.
 
@@ -52,12 +52,16 @@ feat: MVP do Clarea como app instalável (Anotar, Clarear o dia, Hoje)
 ## Como publicar uma atualização
 
 1. Altere os arquivos.
-2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.9`). Um teste automático avisa se algum ficar diferente.
+2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.10`). Um teste automático avisa se algum ficar diferente.
 3. Envie para o GitHub. Quem já tem o app instalado recebe a versão nova ao abrir o app (às vezes é preciso fechar e abrir de novo).
+
+## O que mudou na 1.0.10
+
+- No Hoje, as anotações para clarear voltaram a aparecer só como quantidade ("Você tem N anotações para clarear"), com o botão Clarear o dia. A opção **Ver anotações** abre a lista, com editar e apagar, e **Ocultar anotações** fecha.
 
 ## O que mudou na 1.0.9
 
-- No Hoje, o cartão "Para clarear" mostra as 3 anotações mais recentes (ou todas, em "Ver todas"), com o botão Clarear o dia. Tocar numa linha edita ou apaga.
+- No Hoje, um cartão com as anotações para clarear (na 1.0.10 ele passou a vir recolhido).
 - O texto que você digita em Anotar e não salva fica guardado no aparelho e volta ao reabrir o app. Some ao salvar e em "Apagar tudo".
 - A tela Anotar ganhou o botão Voltar, que leva ao Hoje.
 - "Dia claro" passou a "Dia clareado".
