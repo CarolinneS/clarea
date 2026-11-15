@@ -64,3 +64,31 @@ test('editar um assunto e depois outro não mistura os textos digitados', async 
   assert.equal(valor, 'Segundo', 'o campo deve mostrar o texto do outro assunto');
   await contexto.close();
 });
+
+test('o rascunho do Anotar volta depois de fechar e abrir o app, e some ao guardar', async () => {
+  const { contexto, pagina } = await novaPagina(amb, estadoBase());
+  await pagina.goto(amb.url + '?tela=anotar');
+  await pagina.fill('#new-line', 'ainda não guardei');
+  await pagina.close();
+  const outra = await contexto.newPage();
+  await outra.goto(amb.url + '?tela=anotar');
+  await outra.waitForSelector('body[data-pronto]');
+  assert.equal(await outra.inputValue('#new-line'), 'ainda não guardei');
+  await outra.press('#new-line', 'Enter');
+  await outra.reload();
+  await outra.waitForSelector('body[data-pronto]');
+  assert.equal(await outra.inputValue('#new-line'), '', 'depois de guardar não volta mais');
+  await contexto.close();
+});
+
+test('Apagar tudo também apaga o rascunho', async () => {
+  const { contexto, pagina } = await novaPagina(amb, estadoBase([assunto('x', { focus: true })]));
+  await pagina.goto(amb.url + '?tela=anotar');
+  await pagina.fill('#new-line', 'rascunho secreto');
+  await pagina.click('[data-act="go"][data-to="perfil"]');
+  await pagina.click('[data-act="reset"]');
+  await pagina.click('[data-act="reset"]');
+  await pagina.waitForSelector('text=Tudo apagado');
+  assert.equal(await pagina.evaluate(() => localStorage.getItem('clarea-rascunho')), null);
+  await contexto.close();
+});
