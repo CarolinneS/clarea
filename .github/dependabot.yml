@@ -1,0 +1,20 @@
+# Avisa (por pull request) quando há versão nova ou correção de segurança nas dependências de desenvolvimento
+# e nas ações do GitHub Actions. Nenhuma dependência entra no app publicado (a biblioteca Dexie fica em vendor/
+# e é conferida à mão: ver vendor/README.md).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    groups:
+      desenvolvimento:
+        patterns: ['*']
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
