@@ -301,7 +301,7 @@ import * as Arm from './src/armazenamento.js';
 import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation as observationPuro } from './src/textos.js';
 (function () {
   'use strict';
-  const VERSAO = '1.0.8';
+  const VERSAO = '1.0.9';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -780,7 +780,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   const meBtn = () => `<button class="me" data-act="go" data-to="perfil" aria-label="Perfil e configurações">${esc(myInitial())}</button>`;
   function scrAnotar() {
     const ns = novos(), old = visiveis();
-    return `${demoBar()}<header class="row between"><div class="stack-s" style="gap:2px"><span class="small muted">${dateLong()}</span><h1>Anotar</h1></div>${meBtn()}</header>
+    return `${demoBar()}<header class="row between"><div class="row" style="gap:8px">${S.tour === 1 ? '' : backBtn('hoje')}<div class="stack-s" style="gap:2px"><span class="small muted">${dateLong()}</span><h1>Anotar</h1></div></div>${meBtn()}</header>
       ${tipCard('anotar')}
       ${S.tour === 1 ? '' : `<div class="chips"><span class="pill on">${plural(ns.length, 'assunto', 'assuntos')} para clarear</span><span class="pill">Clarear o dia às ${horaLabel(S.hora)}</span></div>
       ${ns.length ? `<button class="btn btn-primary" data-act="clear-intro">Clarear o dia agora</button>` : ''}
@@ -790,7 +790,11 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
         : `<div class="empty"><p>Nada anotado por enquanto.</p><p class="small muted">Uma linha por assunto, do jeito que vier na cabeça.</p></div>`}
       ${S.tour === 1 ? tourBalloon1() : ''}`;
   }
-  const dockAnotar = () => `<form class="composer" id="composer"><label for="new-line" class="sr">Nova anotação</label><input id="new-line" autocomplete="off" placeholder="Escreva e aperte Enter" enterkeyhint="send"><button type="submit" class="send" aria-label="Guardar anotação">${IC.send}</button></form>
+  /* Rascunho da anotação: guardado só neste aparelho enquanto se digita, devolvido ao reabrir e apagado ao salvar. */
+  const RASCUNHO = 'clarea-rascunho';
+  const lerRascunho = () => { try { return localStorage.getItem(RASCUNHO) || ''; } catch (e) { return ''; } };
+  const guardarRascunho = (v) => { try { if (v) localStorage.setItem(RASCUNHO, v); else localStorage.removeItem(RASCUNHO); } catch (e) { /* sem espaço ou bloqueado: segue sem rascunho */ } };
+  const dockAnotar = () => `<form class="composer" id="composer"><label for="new-line" class="sr">Nova anotação</label><input id="new-line" value="${esc(lerRascunho())}" autocomplete="off" placeholder="Escreva e aperte Enter" enterkeyhint="send"><button type="submit" class="send" aria-label="Guardar anotação">${IC.send}</button></form>
       <p class="hint">Salvo na hora · use @ para pessoa e # para tema, se quiser</p>`;
 
   /* =========================================================
@@ -893,6 +897,14 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     return `<div class="card row" style="align-items:flex-start"><div class="stack-s grow"><p class="small">${last ? `Faz ${dias} dias desde a sua última cópia de segurança.` : 'Você ainda não salvou uma cópia de segurança.'} Seus dados ficam só neste aparelho.</p>
       <button class="btn-s primary" data-act="export" style="align-self:flex-start">Salvar uma cópia</button></div></div>`;
   }
+  /* Anotações ainda sem organizar, à vista no Hoje: as 3 mais recentes, ou todas ao expandir. */
+  function paraClarear() {
+    const todas = novos().slice().reverse(), n = todas.length;
+    const lista = S.showNovos ? todas : todas.slice(0, 3);
+    return `<div class="soft stack-s"><div class="row between"><span class="label">Para clarear · ${n}</span><button class="btn-s primary" data-act="clear-intro">Clarear o dia</button></div>
+      <ul class="lines">${lista.map(lineRow).join('')}</ul>
+      ${n > 3 ? `<button class="link" data-act="toggle-novos" aria-expanded="${!!S.showNovos}" style="align-self:flex-start;min-height:36px">${S.showNovos ? 'Ver menos' : `Ver todas (${n})`}</button>` : ''}</div>`;
+  }
   function scrHoje() {
     const vis = visiveis(), F = focusList(), foco = F.list, done = doneToday(), pct = dayPct();
     if (S.expanded !== '__none' && !foco.some((i) => i.id === S.expanded)) S.expanded = foco[0] ? foco[0].id : null;
@@ -900,7 +912,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     const per = {};
     vis.forEach((i) => { if (i.person) per[i.person] = (per[i.person] || 0) + 1; });
     const semPessoa = vis.filter((i) => !i.person).length;
-    const title = !done && !vis.length ? 'Seu dia está começando' : !done ? 'Comece pelo foco' : pct >= 1 ? 'Dia claro' : 'Seu dia está clareando';
+    const title = !done && !vis.length ? 'Seu dia está começando' : !done ? 'Comece pelo foco' : pct >= 1 ? 'Dia clareado' : 'Seu dia está clareando';
     const sub = !done && !vis.length ? 'Nada pedindo atenção. Toque em Anotar quando algo aparecer.' : `${plural(done, 'resolvido', 'resolvidos')} hoje. ${vis.length ? `${plural(foco.length, 'assunto pede', 'assuntos pedem')} sua atenção.` : 'Nada mais pedindo atenção.'}`;
     const tour3 = S.tour === 3 ? `<div class="balloon dark"><span class="step">Passo 3 de 3</span><p class="b-title">Este é o seu Hoje.</p>
         <p class="muted">O anel mostra o quanto o dia já clareou. No foco ficam os assuntos que você escolheu, com ações em um toque, e dá para mudar quando quiser. Nas suas iniciais, lá em cima, ficam as configurações.</p>
@@ -909,7 +921,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     return `${demoBar()}<header class="row between"><div class="stack-s" style="gap:2px"><span class="small muted">${dateLong()}</span><h1 class="hoje-h1">${greeting()}${S.name ? ', ' + esc(S.name) : ''}</h1></div>
         <button class="me ${S.tour === 3 ? 'glow' : ''}" data-act="go" data-to="perfil" aria-label="Perfil e configurações">${esc(myInitial())}</button></header>
       <div class="lens-card">${lens(108, pct)}<div class="stack-s" style="gap:6px;min-width:0"><div class="lens-title">${title}</div><p class="small muted">${sub}</p></div></div>
-      ${ns && !quiet ? `<div class="soft stack-s"><p>Você tem ${plural(ns, 'anotação', 'anotações')} para clarear.</p><button class="btn-s primary" data-act="clear-intro" style="align-self:flex-start">Clarear o dia</button></div>` : ''}
+      ${ns && !quiet ? paraClarear() : ''}
       ${obs && !quiet ? `<div class="soft row" style="align-items:flex-start">${obs.person ? ava(obs.person) : logo(32, true)}<div class="stack-s"><p>${esc(obs.text)}</p>${obs.person ? `<button class="btn-s primary" data-act="sheet" data-kind="pauta" data-person="${esc(obs.person)}" style="align-self:flex-start">Pauta com ${esc(obs.person)}</button>` : ''}</div></div>` : ''}
       ${tour3}
       ${foco.length ? `<div class="row between"><span class="row" style="gap:8px"><h2 class="sec-title" style="margin:0">Foco de hoje</h2>${F.chosen ? '' : '<span class="small muted">sugerido</span>'}</span><button class="link" data-act="foco-open" style="min-height:36px">Mudar</button></div>
@@ -1279,6 +1291,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       case 'demo-end': restoreRealData(); S.demo = false; S.clear = null; S.expanded = null; go('hoje'); toast('Você saiu da demonstração.'); break;
       case 'tip-ok': S.tips[el.dataset.key] = true; render(); break;
       case 'tips-reset': S.tips = {}; toast('As dicas vão aparecer de novo em cada tela.'); render(); break;
+      case 'toggle-novos': S.showNovos = !S.showNovos; render(); break;
       case 'edit': S.editing = el.dataset.id; render('edit-input'); break;
       case 'edit-cancel': S.editing = null; render(); break;
       case 'edit-del': {
@@ -1380,7 +1393,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
         try { if (dbPromise) (await dbPromise).close(); } catch (e) { /* já estava fechado */ }
         dbPromise = null;
         await Arm.apagarBancos(DB);
-        try { localStorage.removeItem('clarea-estado'); } catch (e) { /* nada */ }
+        try { localStorage.removeItem('clarea-estado'); localStorage.removeItem(RASCUNHO); } catch (e) { /* nada */ }
         try { DB = await Arm.abrir(); } catch (e) { DB = null; }
         E = estadoVazio(); Ereal = null;
         ultimaChave = null;
@@ -1397,7 +1410,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     const f = e.target;
     if (f.id === 'composer') {
       const inp = document.getElementById('new-line');
-      if (addItem(inp.value)) { inp.value = ''; render('new-line'); }
+      if (addItem(inp.value)) { inp.value = ''; guardarRascunho(''); render('new-line'); }
     } else if (f.id === 'edit-form') {
       const v = document.getElementById('edit-input').value.trim();
       if (byId(f.dataset.id) && v) commit(Casos.editarTexto(E, f.dataset.id, v, ctx()));
@@ -1430,6 +1443,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
 
   document.addEventListener('input', (e) => {
     const t = e.target;
+    if (t.id === 'new-line') guardarRascunho(t.value);
     if (t.id === 'busca') { S.q = t.value; document.getElementById('hist-list').innerHTML = histList(); }
     if (t.id === 'nome') { const p = document.getElementById('nome-preview'); if (p) p.textContent = t.value.trim() || 'você'; }
   });
