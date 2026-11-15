@@ -301,7 +301,7 @@ import * as Arm from './src/armazenamento.js';
 import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation as observationPuro } from './src/textos.js';
 (function () {
   'use strict';
-  const VERSAO = '1.0.9';
+  const VERSAO = '1.0.10';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -897,13 +897,13 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     return `<div class="card row" style="align-items:flex-start"><div class="stack-s grow"><p class="small">${last ? `Faz ${dias} dias desde a sua última cópia de segurança.` : 'Você ainda não salvou uma cópia de segurança.'} Seus dados ficam só neste aparelho.</p>
       <button class="btn-s primary" data-act="export" style="align-self:flex-start">Salvar uma cópia</button></div></div>`;
   }
-  /* Anotações ainda sem organizar, à vista no Hoje: as 3 mais recentes, ou todas ao expandir. */
+  /* Anotações ainda sem organizar: no Hoje ficam recolhidas; "Ver anotações" abre a lista, com editar e apagar. */
   function paraClarear() {
-    const todas = novos().slice().reverse(), n = todas.length;
-    const lista = S.showNovos ? todas : todas.slice(0, 3);
-    return `<div class="soft stack-s"><div class="row between"><span class="label">Para clarear · ${n}</span><button class="btn-s primary" data-act="clear-intro">Clarear o dia</button></div>
-      <ul class="lines">${lista.map(lineRow).join('')}</ul>
-      ${n > 3 ? `<button class="link" data-act="toggle-novos" aria-expanded="${!!S.showNovos}" style="align-self:flex-start;min-height:36px">${S.showNovos ? 'Ver menos' : `Ver todas (${n})`}</button>` : ''}</div>`;
+    const n = novos().length, aberto = !!S.showNovos;
+    return `<div class="soft stack-s"><p>Você tem ${plural(n, 'anotação', 'anotações')} para clarear.</p>
+      <div class="row" style="gap:12px;flex-wrap:wrap;align-items:center"><button class="btn-s primary" data-act="clear-intro">Clarear o dia</button>
+        <button class="link" data-act="toggle-novos" aria-expanded="${aberto}" style="min-height:36px">${aberto ? 'Ocultar anotações' : 'Ver anotações'}</button></div>
+      ${aberto ? `<ul class="lines">${novos().slice().reverse().map(lineRow).join('')}</ul><p class="xs muted">Toque numa linha para editar ou apagar.</p>` : ''}</div>`;
   }
   function scrHoje() {
     const vis = visiveis(), F = focusList(), foco = F.list, done = doneToday(), pct = dayPct();
