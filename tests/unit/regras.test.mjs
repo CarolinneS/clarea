@@ -100,3 +100,21 @@ test('todo módulo de src/ está na lista de arquivos essenciais do service work
   const faltando = readdirSync(resolve(raiz, 'src')).filter((f) => f.endsWith('.js')).filter((f) => !bloco.includes(`'./src/${f}'`));
   assert.deepEqual(faltando, [], 'sem isso o app não abre offline');
 });
+
+// D-014 · Pessoa só aparece quando o texto cita alguém.
+test('sugestão: frases de estudo e do dia a dia não geram pessoa', () => {
+  for (const t of ['Estudar capítulo 3 de Biologia', 'Fazer exercícios de Cálculo', 'Revisar para Prova de Física', 'Ler o Capítulo 2 do livro',
+    'Entregar o trabalho de História', 'Pagar a Conta de luz', 'Estudar pra Prova', 'Pedir Pizza', 'Cobrar a Prova do professor', 'Comprar pão']) {
+    const r = suggest(t, ctx());
+    assert.equal(r.person, '', `"${t}" não cita ninguém`);
+    assert.doesNotMatch(r.why, /nome/, `"${t}": o motivo não pode falar de pessoa`);
+  }
+});
+
+test('sugestão: continua achando pessoa citada de verdade', () => {
+  const casos = {
+    'Marcar consulta com Dra Ana': 'Ana', 'Falar com Bruno sobre o orçamento': 'Bruno', 'Ligar para a Mariana': 'Mariana',
+    'Enviar relatório para o Marcos': 'Marcos', 'Estudar com Maria': 'Maria', 'Cobrar o contrato com @marina': 'Marina'
+  };
+  for (const [t, esperado] of Object.entries(casos)) assert.equal(suggest(t, ctx()).person, esperado, t);
+});
