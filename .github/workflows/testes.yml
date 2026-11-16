@@ -29,3 +29,30 @@ jobs:
 
       - name: Rodar os testes
         run: npm test
+
+  # Mesmos testes no motor do Safari (WebKit). Por enquanto não bloqueia: serve para
+  # descobrir o que quebra no iPhone. Quando estiver verde, passa a ser obrigatório.
+  testes-safari:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    continue-on-error: true
+    env:
+      NAVEGADOR: webkit
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Instalar ferramentas de teste (só desenvolvimento)
+        run: npm install --no-audit --no-fund
+
+      - name: Instalar o navegador de teste (WebKit)
+        run: npx playwright install --with-deps webkit
+
+      - name: Diagnóstico de abertura
+        run: node tests/helpers/diagnostico.mjs
+
+      - name: Rodar os testes no WebKit
+        run: npm test
