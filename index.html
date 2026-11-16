@@ -301,7 +301,7 @@ import * as Arm from './src/armazenamento.js';
 import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation as observationPuro } from './src/textos.js';
 (function () {
   'use strict';
-  const VERSAO = '1.0.10';
+  const VERSAO = '1.0.11';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -721,7 +721,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   }
   const VER = [
     ['Anotar', 'Durante o dia, você escreve uma linha por assunto, do jeito que vier. Sem tipo, sem prazo, sem pensar.'],
-    ['Clarear o dia', 'No fim do dia, um assunto por vez. O Clarea sugere tipo, pessoa e tema; você só confirma ou corrige.'],
+    ['Clarear o dia', 'No fim do dia, um assunto por vez. O Clarea sugere tipo e tema; você só confirma ou corrige.'],
     ['Escolher o foco', 'Você escolhe até 3 assuntos para o dia seguinte. As sugestões já vêm marcadas.'],
     ['Seu Hoje', 'O anel mostra o quanto o dia clareou, o foco fica no alto e as ações estão a um toque. Nas suas iniciais ficam as configurações.']
   ];
@@ -825,10 +825,11 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     const mins = Math.max(1, Math.ceil(((total - c.idx) * 15) / 60));
     const people = uniq([c.sel.person, c.sug.person].concat(S.people)).slice(0, 4);
     const temas = uniq([c.sel.tema, c.sug.tema].concat(activeTemas())).slice(0, 3);
+    const showPessoa = !!(c.sug.person || c.sel.person || c.adding === 'person'); // só se o texto citar alguém (D-014)
     const showTema = activeTemas().length || c.sug.tema || c.sel.tema || c.adding === 'tema';
     const ch = (f, v, l, a) => chipBtn('pick', f, v, l, norm(c.sel[f]) === norm(v), v && norm(c.sug[f]) === norm(v), a);
     const balloon = S.tour === 2 ? `<div class="balloon"><div class="row between"><span class="step">Passo 2 de 3</span><button class="link" data-act="tour-skip" style="min-height:32px">Pular</button></div>
-        <p class="b-title">No fim do dia, você clareia.</p><p class="muted">O Clarea já sugere o tipo e a pessoa. Você confirma, ou corrige com um toque.</p></div>` : '';
+        <p class="b-title">No fim do dia, você clareia.</p><p class="muted">O Clarea já sugere o tipo e o tema. Você confirma, ou corrige com um toque.</p></div>` : '';
     return `${demoBar()}<header class="row between"><h1>Clarear o dia</h1><button class="icon-btn" data-act="clear-exit" aria-label="Sair e continuar depois">${IC.x}</button></header>
       <div class="stack-s"><div class="row between small muted"><span>${c.idx + 1} de ${total}</span><span>cerca de ${mins} min restante${mins > 1 ? 's' : ''}</span></div>
         <div class="bar" role="progressbar" aria-label="Progresso" aria-valuemin="0" aria-valuemax="${total}" aria-valuenow="${c.idx}"><span style="width:${Math.round((c.idx / total) * 100)}%"></span></div></div>
@@ -837,7 +838,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
         <div class="clear-card">
           <p class="clear-text">${highlight(it.text)}</p>
           <div class="stack-s"><span class="label">Tipo</span><div class="chips">${TYPES.map(([k, l]) => ch('type', k, l)).join('')}</div></div>
-          <div class="stack-s"><span class="label">Pessoa</span><div class="chips">${people.map((p) => ch('person', p, p, true)).join('')}${c.adding === 'person' ? '' : '<button class="chip add" data-act="add" data-field="person">+ Outra</button>'}</div>${c.adding === 'person' ? addFormHtml('person', 'add-form') : ''}</div>
+          ${showPessoa ? `<div class="stack-s"><span class="label">Pessoa</span><div class="chips">${people.map((p) => ch('person', p, p, true)).join('')}${c.adding === 'person' ? '' : '<button class="chip add" data-act="add" data-field="person">+ Outra</button>'}</div>${c.adding === 'person' ? addFormHtml('person', 'add-form') : ''}</div>` : ''}
           ${showTema ? `<div class="stack-s"><span class="label">Tema</span><div class="chips">${temas.map((p) => ch('tema', p, p)).join('')}${c.adding === 'tema' ? '' : '<button class="chip add" data-act="add" data-field="tema">+ Outro</button>'}</div>${c.adding === 'tema' ? addFormHtml('tema', 'add-form') : ''}</div>`
             : `<button class="link quiet" data-act="add" data-field="tema" style="align-self:flex-start;min-height:32px">+ Adicionar um tema</button>`}
           <p class="why">${esc(c.sug.why)}</p>
@@ -927,7 +928,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       ${foco.length ? `<div class="row between"><span class="row" style="gap:8px"><h2 class="sec-title" style="margin:0">Foco de hoje</h2>${F.chosen ? '' : '<span class="small muted">sugerido</span>'}</span><button class="link" data-act="foco-open" style="min-height:36px">Mudar</button></div>
         <ul class="focus-list">${foco.map(itemCard).join('')}</ul>` : ''}
       ${gd ? `<p class="small muted">${plural(gd, 'assunto guardado', 'assuntos guardados')} para amanhã.</p>` : ''}
-      ${Object.keys(per).length || semPessoa ? `<span class="label">Por pessoa</span><div class="people">
+      ${Object.keys(per).length ? `<span class="label">Por pessoa</span><div class="people">
         ${Object.keys(per).sort((a, b) => per[b] - per[a]).map((p) => `<button class="person" data-act="sheet" data-kind="pauta" data-person="${esc(p)}">${ava(p, true)}<span>${esc(p)} · ${per[p]}</span></button>`).join('')}
         ${semPessoa ? `<button class="person" data-act="sheet" data-kind="sempessoa"><span class="ava lg none" style="border-radius:50%">·</span><span>Só você · ${semPessoa}</span></button>` : ''}</div>` : ''}
       ${quiet ? '' : backupNudge()}
@@ -974,13 +975,13 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
         <div class="stat"><strong>${visiveis().length}</strong><span class="xs muted">seguindo</span></div></div></div>
       <div class="stack-s"><span class="label">Há mais tempo seguindo</span>
         ${old.length ? `<div class="list-card">${old.map((i) => `<div class="list-row" style="min-height:52px"><span class="small">${esc(i.text)}</span>${ageTag(i)}</div>`).join('')}</div>` : '<p class="small muted">Nada seguindo agora.</p>'}</div>
-      <div class="stack-s"><span class="label">Dias até resolver, por pessoa</span>${bars(avgBy('person'), 'Aparece depois que você resolver assuntos ligados a pessoas.')}</div>
+      ${S.people.length ? `<div class="stack-s"><span class="label">Dias até resolver, por pessoa</span>${bars(avgBy('person'), 'Aparece depois que você resolver assuntos ligados a pessoas.')}</div>` : ''}
       <div class="stack-s"><span class="label">Dias até resolver, por tema</span>${bars(avgBy('tema'), 'Aparece depois que você resolver assuntos com tema.')}</div>`;
   }
   const scrHistorico = () => `${demoBar()}<header class="row between"><h1>Histórico</h1>${meBtn()}</header>
       ${tipCard('historico')}
       <div class="seg" role="group" aria-label="Ver"><button data-act="hist-tab" data-val="lista" aria-pressed="${S.histTab === 'lista'}">Lista</button><button data-act="hist-tab" data-val="numeros" aria-pressed="${S.histTab === 'numeros'}">Números</button></div>
-      ${S.histTab === 'lista' ? `<div><label for="busca" class="sr">Buscar no histórico</label><input id="busca" type="search" placeholder="Buscar por texto, pessoa ou tema" value="${esc(S.q)}" autocomplete="off"></div>
+      ${S.histTab === 'lista' ? `<div><label for="busca" class="sr">Buscar no histórico</label><input id="busca" type="search" placeholder="${S.people.length ? 'Buscar por texto, pessoa ou tema' : 'Buscar por texto ou tema'}" value="${esc(S.q)}" autocomplete="off"></div>
       <div id="hist-list">${histList()}</div>` : numbersHtml()}`;
 
   /* =========================================================
@@ -1001,7 +1002,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
         <div class="stack-s" style="padding:14px 16px"><span>Dias de trabalho</span><div class="grid7">${['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'].map((d, k) => `<button class="tog day" data-act="dia" data-k="${k}" aria-pressed="${S.dias[k]}" aria-label="${d}" style="min-height:40px">${d[0]}</button>`).join('')}</div></div>
         <button class="list-row" data-act="lembrete-toggle" aria-pressed="${S.lembrete}"><span class="stack-s" style="gap:0"><span>Lembrete por notificação</span>${notifState ? `<span class="xs muted">${notifState}</span>` : ''}</span><span class="switch ${S.lembrete ? 'on' : ''}" aria-hidden="true"></span></button></div></div>
       <div class="stack-s"><span class="label">Organização</span><div class="list-card">
-        <button class="list-row" data-act="go" data-to="pessoas"><span>Pessoas e temas</span><span class="small muted">${S.people.length + activeTemas().length}</span></button></div></div>
+        <button class="list-row" data-act="go" data-to="pessoas"><span>${S.people.length ? 'Pessoas e temas' : 'Temas'}</span><span class="small muted">${S.people.length + activeTemas().length}</span></button></div></div>
       <div class="stack-s"><span class="label">Seus dados</span><div class="list-card">
         <button class="list-row" data-act="export"><span>Salvar uma cópia</span><span class="small muted">${lastB}</span></button>
         <button class="list-row" data-act="import">Restaurar uma cópia</button></div>
@@ -1034,9 +1035,9 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       }
       return `<button class="list-row" data-act="tema-edit" data-name="${esc(t)}"><span>${esc(t)}${arq ? ' <span class="st">arquivado</span>' : ''}</span><span class="small muted">${plural(countT(t), 'assunto', 'assuntos')}</span></button>`;
     };
-    return `${demoBar()}<header class="row">${backBtn('perfil')}<h1 style="font-size:22px">Pessoas e temas</h1></header>
-      <p class="small muted">Eles nascem do que você escreve. Aqui você corrige nomes, junta duplicados e arquiva temas encerrados, sem perder o histórico.</p>
-      <div class="stack-s"><span class="label">Pessoas</span>${S.people.length ? `<div class="list-card">${S.people.slice().sort((a, b) => a.localeCompare(b)).map(personRow).join('')}</div>` : '<p class="small muted">Nenhuma pessoa ainda.</p>'}</div>
+    return `${demoBar()}<header class="row">${backBtn('perfil')}<h1 style="font-size:22px">${S.people.length ? 'Pessoas e temas' : 'Temas'}</h1></header>
+      <p class="small muted">${S.people.length ? 'Eles nascem do que você escreve. Aqui você corrige nomes, junta duplicados e arquiva temas encerrados, sem perder o histórico.' : 'Eles nascem do que você escreve. Aqui você corrige nomes e arquiva temas encerrados, sem perder o histórico.'}</p>
+      ${S.people.length ? `<div class="stack-s"><span class="label">Pessoas</span><div class="list-card">${S.people.slice().sort((a, b) => a.localeCompare(b)).map(personRow).join('')}</div></div>` : ''}
       <div class="stack-s"><span class="label">Temas</span>${temasAll.length ? `<div class="list-card">${temasAll.map(temaRow).join('')}</div>` : '<p class="small muted">Nenhum tema ainda. Use # numa anotação ou “+ Adicionar um tema” no Clarear o dia.</p>'}</div>`;
   }
   function renamePerson(from, to) {
@@ -1169,7 +1170,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       body = `<header class="row between"><h1 style="font-size:22px">Editar assunto</h1>${close}</header>
         <form id="edit-item-form" class="stack-s"><label for="edit-item-text" class="label">Texto</label><input id="edit-item-text" value="${esc(it.text)}"></form>
         <div class="stack-s"><span class="label">Tipo</span><div class="chips">${TYPES.map(([k, l]) => ch('type', k, l)).join('')}</div></div>
-        <div class="stack-s"><span class="label">Pessoa</span><div class="chips">${people.map((p) => ch('person', p, p, true)).join('')}${e.adding === 'person' ? '' : '<button class="chip add" data-act="edit-add" data-field="person">+ Outra</button>'}</div>${e.adding === 'person' ? addFormHtml('person', 'edit-add-form') : ''}</div>
+        ${it.person || e.person || e.adding === 'person' || suggest(it.text).person ? `<div class="stack-s"><span class="label">Pessoa</span><div class="chips">${people.map((p) => ch('person', p, p, true)).join('')}${e.adding === 'person' ? '' : '<button class="chip add" data-act="edit-add" data-field="person">+ Outra</button>'}</div>${e.adding === 'person' ? addFormHtml('person', 'edit-add-form') : ''}</div>` : ''}
         <div class="stack-s"><span class="label">Tema</span><div class="chips">${temas.map((p) => ch('tema', p, p)).join('')}${e.adding === 'tema' ? '' : '<button class="chip add" data-act="edit-add" data-field="tema">+ Outro</button>'}</div>${e.adding === 'tema' ? addFormHtml('tema', 'edit-add-form') : ''}</div>
         <button class="btn btn-primary" data-act="edit-save">Salvar</button>`;
     }

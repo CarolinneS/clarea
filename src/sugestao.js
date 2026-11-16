@@ -27,9 +27,17 @@ export function suggest(text, ctx) {
     const tit = text.match(/(?:^|\s)(?:Dr|Dra|Sr|Sra|Prof|Profa)\.?\s+(\p{Lu}\p{Ll}+)/u);
     if (tit) r.person = tit[1];
   }
-  if (!r.person) {
-    const m = text.match(/(?:^|\s)(?:com|da|do|de|a|o|à|pela|pelo|para|pra)\s+(\p{Lu}\p{Ll}+)(?!\.)/u);
-    if (m && !STOP.has(norm(m[1])) && !temasTodos.some((p) => norm(p).split(' ').includes(norm(m[1])))) r.person = m[1];
+  // Só vale como pessoa o que o texto realmente cita: "com Nome" ou um verbo de contato seguido de "para Nome".
+  // "de/do/da/para + Maiúscula" soltos NÃO valem: viram "Biologia", "Prova", "Conta" (D-014).
+  const nome = '(\\p{Lu}\\p{Ll}+)(?!\\.)';
+  const regrasPessoa = [
+    new RegExp('(?:^|\\s)com\\s+' + nome, 'u'),
+    new RegExp('\\b(?:ligar|avisar|pedir|cobrar|mandar|enviar|perguntar|escrever|responder|ligue|avise|mande|envie)\\b[^.!?\\n]{0,40}?\\b(?:para|pra|ao|à)\\s+(?:(?:a|o)\\s+)?' + nome, 'iu')
+  ];
+  for (const re of regrasPessoa) {
+    if (r.person) break;
+    const m = text.match(re);
+    if (m && /^\p{Lu}/u.test(m[1]) && !STOP.has(norm(m[1])) && !temasTodos.some((p) => norm(p).split(' ').includes(norm(m[1])))) r.person = m[1];
   }
   if (r.person) {
     const n = items.filter((i) => i.status !== 'novo' && norm(i.person) === norm(r.person)).length;

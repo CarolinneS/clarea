@@ -1,4 +1,4 @@
-# Clarea · versão 1.0.10
+# Clarea · versão 1.0.11
 
 > Escreva como pensa. O Clarea organiza no fim do dia.
 
@@ -52,8 +52,14 @@ feat: MVP do Clarea como app instalável (Anotar, Clarear o dia, Hoje)
 ## Como publicar uma atualização
 
 1. Altere os arquivos.
-2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.10`). Um teste automático avisa se algum ficar diferente.
+2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.11`). Um teste automático avisa se algum ficar diferente.
 3. Envie para o GitHub. Quem já tem o app instalado recebe a versão nova ao abrir o app (às vezes é preciso fechar e abrir de novo).
+
+## O que mudou na 1.0.11
+
+- **Pessoa só aparece quando o texto cita alguém.** No "Clarear o dia" e na edição do assunto, o bloco Pessoa some se a anotação não mencionar ninguém (por exemplo "Estudar capítulo 3 de Biologia"). Se citar, ele vem já sugerido para você confirmar ou corrigir.
+- A detecção ficou mais rígida: vale `@nome`, pessoa já cadastrada, título (Dr, Dra, Prof...), "com Nome" e verbos de contato ("ligar, avisar, cobrar, enviar... para Nome"). Palavras como "de Biologia", "para Prova" ou "a Conta" deixaram de virar pessoa. Para ligar uma pessoa que o app não reconheceu, escreva `@nome` na anotação.
+- "Por pessoa" (Hoje), "por pessoa" (Resumo) e "Pessoas" (Perfil) só aparecem quando existe pelo menos uma pessoa. Sem pessoas, o Perfil mostra só "Temas".
 
 ## O que mudou na 1.0.10
 
