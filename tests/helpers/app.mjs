@@ -1,15 +1,17 @@
 // Ajudantes dos testes de ponta a ponta: sobem o app localmente, abrem o navegador
 // e permitem preparar e ler os dados guardados no aparelho (IndexedDB).
-import { chromium } from 'playwright';
+import * as playwright from 'playwright';
 import { iniciarServidor } from './server.mjs';
 
 export async function abrirAmbiente() {
   const servidor = await iniciarServidor(0);
-  const navegador = await chromium.launch({
+  // NAVEGADOR=webkit roda os testes no motor do Safari (padrão: chromium).
+  const motor = process.env.NAVEGADOR || 'chromium';
+  const navegador = await playwright[motor].launch(motor === 'chromium' ? {
     // Localmente dá para apontar para um Chrome já instalado: CHROME_PATH=/caminho/do/chrome
     executablePath: process.env.CHROME_PATH || undefined,
     args: ['--no-sandbox']
-  });
+  } : {});
   return {
     url: servidor.url,
     navegador,
