@@ -299,6 +299,7 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
 <script type="module">
 import { TYPES, typeLabel, esc, norm, cap, plural, iso, addDays, diffDays, ageOf as ageOfEm, ageText, ageCls, horaLabel, dateShort as dateShortEm, initials, avaCls, fmt1 } from './src/util.js';
 import { suggest as suggestPuro } from './src/sugestao.js';
+import { buscar } from './src/busca.js';
 import { score as scorePuro, bySuggestion as bySuggestionPuro, focusList as focusListPuro, dayPct as dayPctPuro, doneToday as doneTodayPuro } from './src/foco.js';
 import { estadoVazio, novoAssunto, validar as validarV2 } from './src/modelo.js';
 import { migrarParaV2, detectarFormato } from './src/migracao.js';
@@ -307,7 +308,7 @@ import * as Arm from './src/armazenamento.js';
 import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation as observationPuro } from './src/textos.js';
 (function () {
   'use strict';
-  const VERSAO = '1.0.13';
+  const VERSAO = '1.0.14';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -359,7 +360,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     items: [], tasks: [], people: [], temas: [], temasArq: [],
     // só da sessão
     screen: 'boas-vindas', otherHora: false, tour: null, ver: null, demo: false, saved: null,
-    clear: null, expanded: null, editing: null, showOld: false, sheet: null, q: '', histTab: 'lista',
+    clear: null, expanded: null, editing: null, showOld: false, sheet: null, q: '', histTab: 'lista', lim: {},
     undo: null, confirmReset: false, ringFrom: 0, pick: [], pendingImport: null, editSel: null, personEdit: null, temaEdit: null
   });
   let S = fresh();
@@ -767,6 +768,10 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
      11. Anotar
      ========================================================= */
   const highlight = (t) => esc(t).replace(/@([\p{L}]+)/gu, '<span class="mention">@$1</span>').replace(/#([\p{L}\d]+)/gu, '<span class="hash">#$1</span>');
+  /* Listas que podem crescer mostram 50 por vez, com "Mostrar mais" (E2.3, D-015). */
+  const PAGINA = 50;
+  const lim = (k) => S.lim[k] || PAGINA;
+  const maisBtn = (k, restantes, rotulo = 'Mostrar mais') => restantes > 0 ? `<button class="btn-s" data-act="mais" data-k="${k}" style="align-self:center">${rotulo} (${restantes})</button>` : '';
   function lineRow(i) {
     if (S.editing === i.id) {
       return `<li><form class="edit" id="edit-form" data-id="${i.id}"><label for="edit-input" class="sr">Editar anotação</label>
@@ -791,8 +796,8 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       ${S.tour === 1 ? '' : `<div class="chips"><span class="pill on">${plural(ns.length, 'assunto', 'assuntos')} para clarear</span><span class="pill">Clarear o dia às ${horaLabel(S.hora)}</span></div>
       ${ns.length ? `<button class="btn btn-primary" data-act="clear-intro">Clarear o dia agora</button>` : ''}
       ${old.length ? `<button class="fold" data-act="toggle-old" aria-expanded="${S.showOld}"><span>Seguindo de dias anteriores (${old.length})</span>${IC.chev}</button>
-        ${S.showOld ? `<ul class="quiet-list">${old.map((i) => `<li><span>${esc(i.text)}</span>${ageTag(i)}</li>`).join('')}</ul>` : ''}` : ''}`}
-      ${ns.length ? `<ul class="lines">${ns.map(lineRow).join('')}</ul>${S.tour === 1 ? '' : '<p class="xs muted">Toque numa linha para editar ou apagar.</p>'}`
+        ${S.showOld ? `<ul class="quiet-list">${old.slice(0, lim('antigos')).map((i) => `<li><span>${esc(i.text)}</span>${ageTag(i)}</li>`).join('')}</ul>${maisBtn('antigos', old.length - lim('antigos'))}` : ''}` : ''}`}
+      ${ns.length ? `${maisBtn('anotar', ns.length - lim('anotar'), 'Mostrar anotações mais antigas')}<ul class="lines">${ns.slice(-lim('anotar')).map(lineRow).join('')}</ul>${S.tour === 1 ? '' : '<p class="xs muted">Toque numa linha para editar ou apagar.</p>'}`
         : `<div class="empty"><p>Nada anotado por enquanto.</p><p class="small muted">Uma linha por assunto, do jeito que vier na cabeça.</p></div>`}
       ${S.tour === 1 ? tourBalloon1() : ''}`;
   }
@@ -922,7 +927,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     return `<div class="soft stack-s"><p>Você tem ${plural(n, 'anotação', 'anotações')} para clarear.</p>
       <div class="row" style="gap:12px;flex-wrap:wrap;align-items:center"><button class="btn-s primary" data-act="clear-intro">Clarear o dia</button>
         <button class="link" data-act="toggle-novos" aria-expanded="${aberto}" style="min-height:36px">${aberto ? 'Ocultar anotações' : 'Ver anotações'}</button></div>
-      ${aberto ? `<ul class="lines">${novos().slice().reverse().map(lineRow).join('')}</ul><p class="xs muted">Toque numa linha para editar ou apagar.</p>` : ''}</div>`;
+      ${aberto ? `<ul class="lines">${novos().slice().reverse().slice(0, lim('novos')).map(lineRow).join('')}</ul>${maisBtn('novos', n - lim('novos'))}<p class="xs muted">Toque numa linha para editar ou apagar.</p>` : ''}</div>`;
   }
   function scrHoje() {
     const vis = visiveis(), F = focusList(), foco = F.list, done = doneToday(), pct = dayPct();
@@ -959,14 +964,15 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
      ========================================================= */
   const STATUS = { novo: ['Para clarear', ''], aberto: ['Seguindo', 'seg'], resolvido: ['Resolvido', 'res'], solto: ['Deixado pra lá', ''] };
   function histList() {
-    const q = norm(S.q);
-    const list = S.items.filter((i) => !q || norm([i.text, i.person, i.tema, typeLabel(i.type)].join(' ')).includes(q)).sort((a, b) => (b.created > a.created ? 1 : b.created < a.created ? -1 : 0));
+    const ids = buscar(E, S.q), mapa = new Map(S.items.map((i) => [i.id, i]));
+    const list = ids.map((id) => mapa.get(id)).filter(Boolean);
     if (!list.length) return `<div class="empty"><p>${S.items.length ? 'Nada encontrado com essa busca.' : 'O histórico aparece aqui depois das primeiras anotações.'}</p></div>`;
-    return `<ul class="hist">${list.map((i) => {
+    const mostrados = list.slice(0, lim('hist'));
+    return `${S.q.trim() ? `<p class="xs muted">${plural(list.length, 'resultado', 'resultados')}</p>` : ''}<ul class="hist">${mostrados.map((i) => {
       const [lab, cls] = i.status === 'aberto' && isSnoozed(i) ? ['Amanhã', 'seg'] : STATUS[i.status] || ['', ''];
       const meta = [typeLabel(i.type), i.person, i.tema].filter(Boolean).map(esc);
       return `<li><span>${esc(i.text)}</span><span class="meta"><span class="st ${cls}">${lab}</span>${meta.join(' · ')}${meta.length ? ' · ' : ''}anotado em ${dateShort(i.created)}</span></li>`;
-    }).join('')}</ul>`;
+    }).join('')}</ul><div class="stack-s">${maisBtn('hist', list.length - mostrados.length)}</div>`;
   }
   function avgBy(field) {
     const g = {};
@@ -1319,6 +1325,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       case 'tip-ok': S.tips[el.dataset.key] = true; render(); break;
       case 'tips-reset': S.tips = {}; toast('As dicas vão aparecer de novo em cada tela.'); render(); break;
       case 'toggle-novos': S.showNovos = !S.showNovos; render(); break;
+      case 'mais': S.lim[el.dataset.k] = lim(el.dataset.k) + PAGINA; render(); break;
       case 'edit': S.editing = el.dataset.id; render('edit-input'); break;
       case 'edit-cancel': S.editing = null; render(); break;
       case 'edit-del': {
@@ -1476,7 +1483,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     const t = e.target;
     if (t.id === 'new-line' || t.id === 'edit-input') { crescer(t); const a = document.getElementById('limite'); if (a && !a.hidden) avisarLimite(t); }
     if (t.id === 'new-line') guardarRascunho(t.value);
-    if (t.id === 'busca') { S.q = t.value; document.getElementById('hist-list').innerHTML = histList(); }
+    if (t.id === 'busca') { S.q = t.value; S.lim.hist = PAGINA; document.getElementById('hist-list').innerHTML = histList(); }
     if (t.id === 'nome') { const p = document.getElementById('nome-preview'); if (p) p.textContent = t.value.trim() || 'você'; }
   });
   document.addEventListener('change', (e) => {

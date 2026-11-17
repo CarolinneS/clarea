@@ -1,4 +1,4 @@
-# Clarea · versão 1.0.13
+# Clarea · versão 1.0.14
 
 > Escreva como pensa. O Clarea organiza no fim do dia.
 
@@ -52,8 +52,14 @@ feat: MVP do Clarea como app instalável (Anotar, Clarear o dia, Hoje)
 ## Como publicar uma atualização
 
 1. Altere os arquivos.
-2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.13`). Um teste automático avisa se algum ficar diferente.
+2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.14`). Um teste automático avisa se algum ficar diferente.
 3. Envie para o GitHub. Quem já tem o app instalado recebe a versão nova ao abrir o app (às vezes é preciso fechar e abrir de novo).
+
+## O que mudou na 1.0.14
+
+- **Listas longas mostram 50 por vez**, com o botão **Mostrar mais** (Histórico, "Ver anotações" no Hoje, a lista de Anotar e "Seguindo de dias anteriores"). Em Anotar aparecem as 50 mais novas, e "Mostrar anotações mais antigas" traz as outras.
+- **Busca melhorada** (agora em `src/busca.js`, testada separadamente): ignora maiúsculas e acentos, aceita **várias palavras em qualquer ordem** (por exemplo "contrato marina"), acha também pelo texto original, pela pessoa, pelo tema e pelo tipo, e mostra a quantidade de resultados. Os resultados vêm do mais recente para o mais antigo.
+- Sem mudança de dados nem de backup.
 
 ## O que mudou na 1.0.13
 
