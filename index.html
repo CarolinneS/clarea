@@ -1507,7 +1507,9 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   /* Voltar do Android (só no app do Capacitor): fecha o que está aberto, volta uma tela
      usando o próprio botão "Voltar" da tela, e só sai do app quando já está em Hoje. */
   try {
-    const AppNativo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+    const Cap = window.Capacitor;
+    const nativo = Cap && Cap.isNativePlatform && Cap.isNativePlatform();
+    const AppNativo = nativo && Cap.registerPlugin ? Cap.registerPlugin('App') : null; // sem bundler: registra o plugin nativo pelo nome
     if (AppNativo && AppNativo.addListener) {
       AppNativo.addListener('backButton', () => {
         if (S.sheet) { S.sheet = null; render(); return; }
