@@ -1,6 +1,6 @@
 /* Service worker do Clarea: guarda o app no aparelho para funcionar sem internet.
    Ao mudar qualquer arquivo do app, aumente o número da versão abaixo. */
-const VERSAO = 'clarea-1.0.13';
+const VERSAO = 'clarea-1.0.14';
 
 // Sem estes arquivos o app não abre offline. Se algum faltar, a instalação falha de propósito.
 const ESSENCIAIS = [
@@ -9,6 +9,7 @@ const ESSENCIAIS = [
   './manifest.webmanifest',
   './src/util.js',
   './src/sugestao.js',
+  './src/busca.js',
   './src/foco.js',
   './src/textos.js',
   './src/modelo.js',
