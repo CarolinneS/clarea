@@ -48,3 +48,47 @@ test('o aviso de Desfazer fica na tela por mais de 5 segundos', async () => {
   assert.equal(await pagina.evaluate(() => !document.getElementById('toast').hidden), true);
   await contexto.close();
 });
+
+// E2.2 · CAP-05 / D-015: "Apagar tudo" pede confirmação clara; apagar uma anotação segue com Desfazer.
+const comDados = () => estadoBase([assunto('Primeiro', { focus: true }), assunto('Segundo'), assunto('Terceiro', { status: 'resolvido', doneDate: '2026-11-10' })]);
+async function abrirPerfil(pagina) { await pagina.goto(amb.url); await pagina.click('[data-act="go"][data-to="perfil"]'); }
+
+test('Apagar tudo: o primeiro toque só abre a confirmação, que diz quanto some e que não dá para desfazer', async () => {
+  const { contexto, pagina } = await novaPagina(amb, comDados());
+  await abrirPerfil(pagina);
+  await pagina.click('[data-act="reset"]');
+  const card = pagina.locator('#reset-card');
+  assert.match(await card.innerText(), /3 assuntos/);
+  assert.match(await card.innerText(), /Não dá para desfazer/);
+  assert.equal((await lerAssuntos(pagina)).length, 3, 'nada foi apagado ainda');
+  await contexto.close();
+});
+
+test('Apagar tudo: Cancelar e sair da tela mantêm tudo; só "Apagar tudo" apaga', async () => {
+  const { contexto, pagina } = await novaPagina(amb, comDados());
+  await abrirPerfil(pagina);
+  await pagina.click('[data-act="reset"]');
+  await pagina.click('[data-act="reset-cancel"]');
+  assert.equal(await pagina.locator('#reset-card').count(), 0);
+  assert.equal((await lerAssuntos(pagina)).length, 3);
+  await pagina.click('[data-act="reset"]');
+  await pagina.click('[data-act="go"][data-to="hoje"]');
+  await pagina.click('[data-act="go"][data-to="perfil"]');
+  assert.equal(await pagina.locator('#reset-card').count(), 0, 'sair da tela cancela');
+  await pagina.click('[data-act="reset"]');
+  await pagina.click('[data-act="reset-ok"]');
+  await pagina.waitForSelector('text=Tudo apagado');
+  assert.equal(await lerAssuntos(pagina), null);
+  await contexto.close();
+});
+
+test('Apagar tudo: "Salvar uma cópia primeiro" baixa a cópia e mantém a confirmação aberta', async () => {
+  const { contexto, pagina } = await novaPagina(amb, comDados());
+  await abrirPerfil(pagina);
+  await pagina.click('[data-act="reset"]');
+  const [download] = await Promise.all([pagina.waitForEvent('download'), pagina.click('#reset-card [data-act="export"]')]);
+  assert.match(download.suggestedFilename(), /clarea/i);
+  assert.equal(await pagina.locator('#reset-card').count(), 1, 'a confirmação continua aberta');
+  assert.equal((await lerAssuntos(pagina)).length, 3);
+  await contexto.close();
+});

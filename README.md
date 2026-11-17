@@ -1,4 +1,4 @@
-# Clarea · versão 1.0.12
+# Clarea · versão 1.0.13
 
 > Escreva como pensa. O Clarea organiza no fim do dia.
 
@@ -52,8 +52,14 @@ feat: MVP do Clarea como app instalável (Anotar, Clarear o dia, Hoje)
 ## Como publicar uma atualização
 
 1. Altere os arquivos.
-2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.12`). Um teste automático avisa se algum ficar diferente.
+2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.13`). Um teste automático avisa se algum ficar diferente.
 3. Envie para o GitHub. Quem já tem o app instalado recebe a versão nova ao abrir o app (às vezes é preciso fechar e abrir de novo).
+
+## O que mudou na 1.0.13
+
+- **"Apagar todos os dados deste aparelho" agora pede uma confirmação clara.** O primeiro toque abre um cartão que diz quantos assuntos serão apagados e que **não dá para desfazer**, com três botões: **Salvar uma cópia primeiro**, **Apagar tudo** e **Cancelar**. Sair da tela também cancela.
+- Ao restaurar uma cópia, o aviso diz quantos assuntos do aparelho serão substituídos.
+- Apagar uma anotação continua imediato, com **Desfazer** por 8 segundos.
 
 ## O que mudou na 1.0.12
 

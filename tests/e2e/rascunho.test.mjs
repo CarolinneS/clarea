@@ -87,7 +87,7 @@ test('Apagar tudo também apaga o rascunho', async () => {
   await pagina.fill('#new-line', 'rascunho secreto');
   await pagina.click('[data-act="go"][data-to="perfil"]');
   await pagina.click('[data-act="reset"]');
-  await pagina.click('[data-act="reset"]');
+  await pagina.click('[data-act="reset-ok"]');
   await pagina.waitForSelector('text=Tudo apagado');
   assert.equal(await pagina.evaluate(() => localStorage.getItem('clarea-rascunho')), null);
   await contexto.close();

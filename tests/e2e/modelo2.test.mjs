@@ -182,7 +182,7 @@ test('Apagar tudo limpa o banco novo e o banco antigo', async () => {
   assert.equal((await lerAssuntos(pagina)).length, 1);
   await pagina.click('[data-act="go"][data-to="perfil"]');
   await pagina.click('[data-act="reset"]');
-  await pagina.click('[data-act="reset"]');
+  await pagina.click('[data-act="reset-ok"]');
   await pagina.waitForSelector('text=Tudo apagado');
   await pagina.waitForTimeout(400);
   assert.equal(await lerAssuntos(pagina), null, 'sem assuntos no banco novo');
