@@ -32,9 +32,9 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      # O Capacitor só é instalado aqui, sem entrar no package.json do app (spike).
+      # O Capacitor (e o plugin App, do botão Voltar) só é instalado aqui, sem entrar no package.json do app (spike).
       - name: Instalar o Capacitor 8 (só neste fluxo)
-        run: npm install --no-save --no-audit --no-fund @capacitor/core@^8 @capacitor/cli@^8 @capacitor/android@^8
+        run: npm install --no-save --no-audit --no-fund @capacitor/core@^8 @capacitor/cli@^8 @capacitor/android@^8 @capacitor/app@^8
 
       - name: Copiar os arquivos do app para www/
         run: node scripts/preparar-www.mjs

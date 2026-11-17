@@ -1504,6 +1504,21 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     if (document.visibilityState === 'visible' && S.onboarded) { trazerDeFora().then(() => { checkReminder(); if (!digitando()) render(); }); }
   });
   window.addEventListener('pagehide', () => { persist(); });
+  /* Voltar do Android (só no app do Capacitor): fecha o que está aberto, volta uma tela
+     usando o próprio botão "Voltar" da tela, e só sai do app quando já está em Hoje. */
+  try {
+    const AppNativo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
+    if (AppNativo && AppNativo.addListener) {
+      AppNativo.addListener('backButton', () => {
+        if (S.sheet) { S.sheet = null; render(); return; }
+        if (S.editing) { S.editing = null; render(); return; }
+        const voltar = document.querySelector('#main .icon-btn[aria-label^="Voltar"]');
+        if (voltar) { voltar.click(); return; }
+        if (S.screen !== 'hoje' && S.onboarded) { go('hoje'); return; }
+        AppNativo.exitApp();
+      });
+    }
+  } catch (e) { /* fora do app nativo não faz nada */ }
   if (window.matchMedia) { try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (S.theme === 'system') applyTheme(); }); } catch (e) { /* navegador antigo */ } }
 
   /* =========================================================
