@@ -80,7 +80,7 @@ test('apagar tudo em uma aba reinicia a outra, sem reviver dados', async () => {
   await outra.waitForFunction(() => document.body.innerText.includes('Vai sumir'));
   await pagina.click('[data-act="go"][data-to="perfil"]');
   await pagina.click('[data-act="reset"]');
-  await pagina.click('[data-act="reset"]');
+  await pagina.click('[data-act="reset-ok"]');
   await outra.waitForFunction(() => !document.querySelector('#new-line') && !document.body.innerText.includes('Vai sumir'), null, { timeout: 5000 });
   await outra.reload();
   await outra.waitForTimeout(500);

@@ -307,7 +307,7 @@ import * as Arm from './src/armazenamento.js';
 import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation as observationPuro } from './src/textos.js';
 (function () {
   'use strict';
-  const VERSAO = '1.0.12';
+  const VERSAO = '1.0.13';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -1029,7 +1029,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
         <button class="list-row" data-act="go" data-to="convite">Rever o passeio pelo app</button>
         <button class="list-row" data-act="tips-reset">Mostrar as dicas de novo</button>
         <button class="list-row" data-act="demo-start" ${S.demo ? 'disabled' : ''}>Ver demonstração com dados inventados</button></div></div>
-      <button class="link danger" data-act="reset" style="align-self:center">${S.confirmReset ? 'Toque de novo para apagar tudo deste aparelho' : 'Apagar todos os dados deste aparelho'}</button>
+      ${S.confirmReset ? resetConfirm() : '<button class="link danger" data-act="reset" style="align-self:center">Apagar todos os dados deste aparelho</button>'}
       <p class="foot">Clarea · versão ${VERSAO}</p>`;
   }
   function scrPessoas() {
@@ -1082,11 +1082,18 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     toast('Cópia salva. Guarde o arquivo num lugar seguro, como o seu e-mail ou nuvem.');
     render();
   }
+  /* Apagar tudo é irreversível: explica o que some, quanto, e oferece salvar uma cópia antes (CAP-05, D-015). */
+  function resetConfirm() {
+    const n = S.items.length;
+    return `<div class="card stack-s" id="reset-card" role="alertdialog" aria-labelledby="reset-t" style="border-color:var(--danger)"><p id="reset-t"><strong>Apagar tudo deste aparelho?</strong></p>
+      <p class="small muted">Isso apaga ${n ? plural(n, 'assunto', 'assuntos') + ', ' : ''}as pessoas, os temas e as configurações guardados aqui. <strong>Não dá para desfazer.</strong> Se quiser manter, salve uma cópia antes.</p>
+      <div class="stack-s"><button class="btn-s" data-act="export">Salvar uma cópia primeiro</button><button class="btn-s" data-act="reset-ok" style="color:var(--danger);border-color:var(--danger);font-weight:700">Apagar tudo</button><button class="btn-s primary" data-act="reset-cancel">Cancelar</button></div></div>`;
+  }
   function importConfirm() {
     const p = S.pendingImport;
     const n = p.n;
     return `<div class="card stack-s" style="border-color:var(--primary)"><p><strong>Restaurar esta cópia?</strong></p>
-      <p class="small muted">Cópia de ${p.savedAt ? new Date(p.savedAt).toLocaleDateString('pt-BR') : 'data desconhecida'}, com ${plural(n, 'assunto', 'assuntos')}. Isso substitui o que está neste aparelho.</p>
+      <p class="small muted">Cópia de ${p.savedAt ? new Date(p.savedAt).toLocaleDateString('pt-BR') : 'data desconhecida'}, com ${plural(n, 'assunto', 'assuntos')}. Isso substitui ${S.items.length ? 'os ' + plural(S.items.length, 'assunto', 'assuntos') + ' que estão' : 'o que está'} neste aparelho.</p>
       <div class="row"><button class="btn-s primary" data-act="import-ok">Restaurar</button><button class="btn-s" data-act="import-cancel">Cancelar</button></div></div>`;
   }
   function onImportFile(file) {
@@ -1285,7 +1292,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     if (!el || el.disabled) return;
     const act = el.dataset.act;
     if (act === 'sheet-close-bg' && e.target !== el) return;
-    if (act !== 'reset') S.confirmReset = false;
+    if (!['reset', 'reset-ok', 'export'].includes(act)) S.confirmReset = false;
     switch (act) {
       case 'go': go(el.dataset.to, el.dataset.to === 'anotar' ? 'new-line' : null); break;
       case 'nome-ok': S.name = document.getElementById('nome').value.trim(); if (!S.name) { toast('Escreva como prefere ser chamado(a).'); return; } go('ritmo'); break;
@@ -1407,8 +1414,10 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       case 'import': document.getElementById('file-in').click(); break;
       case 'import-ok': { const obj = S.pendingImport; S.pendingImport = null; applyImport(obj); break; }
       case 'import-cancel': S.pendingImport = null; render(); break;
-      case 'reset':
-        if (!S.confirmReset) { S.confirmReset = true; render(); return; }
+      case 'reset': S.confirmReset = true; render(); { const c = document.getElementById('reset-card'); if (c) c.scrollIntoView({ block: 'center' }); } break;
+      case 'reset-cancel': render(); break;
+      case 'reset-ok':
+        if (!S.confirmReset) break;
         await fila.catch(() => {});
         try { if (dbPromise) (await dbPromise).close(); } catch (e) { /* já estava fechado */ }
         dbPromise = null;
