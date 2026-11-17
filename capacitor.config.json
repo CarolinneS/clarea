@@ -1,0 +1,8 @@
+{
+  "appId": "app.clarea.teste",
+  "appName": "Clarea",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  }
+}
