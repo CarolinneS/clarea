@@ -1504,18 +1504,29 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     if (document.visibilityState === 'visible' && S.onboarded) { trazerDeFora().then(() => { checkReminder(); if (!digitando()) render(); }); }
   });
   window.addEventListener('pagehide', () => { persist(); });
-  /* Voltar do Android (só no app do Capacitor): fecha o que está aberto, volta uma tela
-     usando o próprio botão "Voltar" da tela, e só sai do app quando já está em Hoje. */
+  /* Voltar do Android (só no app do Capacitor). Fecha o que está aberto, volta uma tela pelo
+     botão "Voltar" da própria tela e, em Hoje, avisa e sai no segundo toque.
+     Funciona pelo histórico do WebView (uma entrada "sentinela"), sem depender de plugin. */
   try {
-    const AppNativo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
-    if (AppNativo && AppNativo.addListener) {
-      AppNativo.addListener('backButton', () => {
-        if (S.sheet) { S.sheet = null; render(); return; }
-        if (S.editing) { S.editing = null; render(); return; }
+    const Cap = window.Capacitor;
+    const nativo = !!(Cap && ((Cap.getPlatform && Cap.getPlatform() !== 'web') || (Cap.isNativePlatform && Cap.isNativePlatform())));
+    if (nativo) {
+      const voltarUmNivel = () => {
+        if (S.sheet) { S.sheet = null; render(); return true; }
+        if (S.editing) { S.editing = null; render(); return true; }
         const voltar = document.querySelector('#main .icon-btn[aria-label^="Voltar"]');
-        if (voltar) { voltar.click(); return; }
-        if (S.screen !== 'hoje' && S.onboarded) { go('hoje'); return; }
-        AppNativo.exitApp();
+        if (voltar) { voltar.click(); return true; }
+        if (S.screen !== 'hoje' && S.onboarded) { go('hoje'); return true; }
+        return false;
+      };
+      const marcar = () => { try { history.pushState({ clarea: 'sentinela' }, ''); } catch (e) { /* ignora */ } };
+      let saindo = false;
+      marcar();
+      window.addEventListener('popstate', () => {
+        if (voltarUmNivel()) { saindo = false; marcar(); return; }
+        if (!saindo) { saindo = true; marcar(); toast('Toque em voltar de novo para sair.'); setTimeout(() => { saindo = false; }, 2500); return; }
+        try { const A = Cap.registerPlugin && Cap.registerPlugin('App'); if (A && A.exitApp) { A.exitApp(); return; } } catch (e) { /* ignora */ }
+        history.back();
       });
     }
   } catch (e) { /* fora do app nativo não faz nada */ }
