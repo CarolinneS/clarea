@@ -2,6 +2,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { abrirAmbiente, novaPagina, estadoBase, assunto } from '../helpers/app.mjs';
+import { iso } from '../../src/util.js';
 
 let amb;
 before(async () => { amb = await abrirAmbiente(); });
@@ -113,7 +114,7 @@ test('a tela Anotar tem Voltar, que leva ao Hoje', async () => {
 });
 
 test('quando tudo foi resolvido o título é "Dia clareado"', async () => {
-  const { contexto, pagina } = await novaPagina(amb, estadoBase([assunto('Feito', { status: 'resolvido', doneDate: new Date().toISOString().slice(0, 10) })]));
+  const { contexto, pagina } = await novaPagina(amb, estadoBase([assunto('Feito', { status: 'resolvido', doneDate: iso(new Date()) /* dia local, como o app (UTC erra depois das 21h no Brasil) */ })]));
   await pagina.goto(amb.url);
   assert.equal(await pagina.locator('.lens-title').innerText(), 'Dia clareado');
   assert.equal(await pagina.locator('text=Dia claro').count(), 0);

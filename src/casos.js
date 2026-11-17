@@ -9,6 +9,9 @@ import { novoId } from './id.js';
 export const mudancaVazia = () => ({ assuntos: [], pessoas: [], temas: [], removerAssuntos: [], removerPessoas: [], removerTemas: [] });
 export const semMudanca = (m) => Object.values(m).every((l) => l.length === 0);
 
+/** Tamanho máximo de uma anotação, em caracteres (D-015). Acima disso nada é gravado nem cortado: a tela avisa. */
+export const LIMITE_TEXTO = 10000;
+
 const ACAO_POR_TIPO = { retomar: 'chase', confirmar: 'check', conversar: 'talk', fazer: 'do' };
 const TIPO_POR_ACAO = { chase: 'retomar', check: 'confirmar', talk: 'conversar', do: 'fazer' };
 const ABERTOS = ['inbox', 'in_progress', 'waiting', 'scheduled'];
@@ -48,7 +51,7 @@ function comTipo(a, tipo, ctx) {
 export function capturar(est, texto, ctx, extra = {}) {
   const t = String(texto || '').trim();
   const m = mudancaVazia();
-  if (!t) return m;
+  if (!t || t.length > LIMITE_TEXTO) return m;
   m.assuntos.push(novoAssunto({
     id: ctx.novoId ? ctx.novoId() : novoId(), original_text: t, text: t, created_at: ctx.agora, updated_at: ctx.agora,
     created_day: ctx.hoje, ordem: maxOrdem(est) + 1, ...extra
@@ -80,7 +83,7 @@ export function organizar(est, id, campos, ctx) {
 export function editarTexto(est, id, texto, ctx) {
   const a = achar(est, id), m = mudancaVazia();
   const t = String(texto || '').trim();
-  if (t && t !== a.text) m.assuntos.push(tocar(a, ctx, { text: t }));
+  if (t && t.length <= LIMITE_TEXTO && t !== a.text) m.assuntos.push(tocar(a, ctx, { text: t }));
   return m;
 }
 

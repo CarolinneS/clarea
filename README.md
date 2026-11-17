@@ -1,4 +1,4 @@
-# Clarea · versão 1.0.11
+# Clarea · versão 1.0.12
 
 > Escreva como pensa. O Clarea organiza no fim do dia.
 
@@ -52,8 +52,16 @@ feat: MVP do Clarea como app instalável (Anotar, Clarear o dia, Hoje)
 ## Como publicar uma atualização
 
 1. Altere os arquivos.
-2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.11`). Um teste automático avisa se algum ficar diferente.
+2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.12`). Um teste automático avisa se algum ficar diferente.
 3. Envie para o GitHub. Quem já tem o app instalado recebe a versão nova ao abrir o app (às vezes é preciso fechar e abrir de novo).
+
+## O que mudou na 1.0.12
+
+- **Anotações com várias linhas.** O campo de Anotar (e o de editar) agora cresce conforme você escreve. Colar um texto com várias linhas guarda tudo **como um único assunto**, com as quebras de linha. Nas listas o texto mostra até 4 linhas; ao tocar, abre inteiro.
+- **Enter:** no computador, Enter guarda e Shift+Enter quebra a linha. No celular, Enter quebra a linha e o botão de enviar guarda.
+- **Limite de 10.000 caracteres por anotação.** Acima disso o app avisa, não grava e **não corta** o texto.
+- Resumos copiados (pauta e resumo da semana) continuam com uma linha por assunto: as quebras viram espaço.
+- Correção só de teste: um teste do Hoje usava a data em UTC e falhava depois das 21h no Brasil.
 
 ## O que mudou na 1.0.11
 
