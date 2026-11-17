@@ -1,9 +1,12 @@
 // Textos prontos (pauta, resumo da semana) e observação do dia. Funções puras.
 import { norm, typeLabel, ageOf, ageText, addDays, dateShort } from './util.js';
 
+// Resumos copiados são listas de uma linha por assunto: quebras de linha da anotação viram espaço.
+const umaLinha = (t) => String(t).replace(/\s*\n\s*/g, ' ');
+
 export function pautaText(person, abertos, hoje) {
   const its = abertos.filter((i) => norm(i.person) === norm(person)).sort((a, b) => ageOf(b, hoje) - ageOf(a, hoje));
-  const lines = its.map((i) => `• ${i.type ? typeLabel(i.type) + ': ' : ''}${i.text} (${ageText(ageOf(i, hoje))})`);
+  const lines = its.map((i) => `• ${i.type ? typeLabel(i.type) + ': ' : ''}${umaLinha(i.text)} (${ageText(ageOf(i, hoje))})`);
   return `Pauta com ${person} (${dateShort(undefined, hoje)})\n\n${lines.join('\n') || 'Nada em aberto com essa pessoa.'}`;
 }
 
@@ -12,9 +15,9 @@ export function semanaText(items, hoje) {
   const groups = {};
   const put = (tema, key, txt) => { const g = (groups[tema || 'Sem tema'] = groups[tema || 'Sem tema'] || { r: [], t: [], s: [] }); g[key].push(txt); };
   items.forEach((i) => {
-    if (i.status === 'resolvido' && i.doneDate >= desde) put(i.tema, 'r', i.text);
-    else if (i.status === 'tarefa' && i.doneDate >= desde) put(i.tema, 't', i.text);
-    else if (i.status === 'aberto') put(i.tema, 's', `${i.text} (${ageText(ageOf(i, hoje))})`);
+    if (i.status === 'resolvido' && i.doneDate >= desde) put(i.tema, 'r', umaLinha(i.text));
+    else if (i.status === 'tarefa' && i.doneDate >= desde) put(i.tema, 't', umaLinha(i.text));
+    else if (i.status === 'aberto') put(i.tema, 's', `${umaLinha(i.text)} (${ageText(ageOf(i, hoje))})`);
   });
   const names = Object.keys(groups).sort((a, b) => (a === 'Sem tema') - (b === 'Sem tema') || a.localeCompare(b));
   const block = (title, arr) => (arr.length ? `  ${title}:\n${arr.map((x) => `   • ${x}`).join('\n')}\n` : '');
@@ -34,6 +37,6 @@ export function observation(visiveis, hoje) {
     }
   }
   const old = visiveis.filter((i) => ageOf(i, hoje) >= 7).sort((a, b) => ageOf(b, hoje) - ageOf(a, hoje))[0];
-  if (old) return { text: `Notei que “${old.text}” está aqui ${ageText(ageOf(old, hoje))}. Ainda faz sentido manter?`, person: '' };
+  if (old) return { text: `Notei que “${umaLinha(old.text)}” está aqui ${ageText(ageOf(old, hoje))}. Ainda faz sentido manter?`, person: '' };
   return null;
 }

@@ -19,8 +19,8 @@ export async function abrirAmbiente() {
 
 // Abre uma página nova num contexto limpo (sem dados, sem service worker) em tamanho de celular.
 // Se `estado` for informado, ele é gravado no IndexedDB antes de o app abrir.
-export async function novaPagina(amb, estado) {
-  const contexto = await amb.navegador.newContext({ viewport: { width: 390, height: 844 } });
+export async function novaPagina(amb, estado, opcoesContexto = {}) {
+  const contexto = await amb.navegador.newContext({ viewport: { width: 390, height: 844 }, ...opcoesContexto });
   const pagina = await contexto.newPage();
   pagina.errosJs = [];
   pagina.requisicoesExternas = [];

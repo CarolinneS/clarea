@@ -246,3 +246,28 @@ test('unir: duas mudanças em sequência valem como uma, e desfazer volta ao com
   const apaga = C.unir(m1, C.apagar(ap(est, m1), inbox.id));
   assert.ok(!ap(est, apaga).assuntos.some((a) => a.id === inbox.id));
 });
+
+// D-015 · Multilinha e limite de tamanho
+test('capturar: guarda as quebras de linha como foram digitadas; acima de 10.000 caracteres não grava nada', () => {
+  const est = congelar(base());
+  const m = C.capturar(est, '  Linha 1\n\nLinha 3  ', ctx());
+  assert.equal(m.assuntos[0].text, 'Linha 1\n\nLinha 3');
+  assert.equal(m.assuntos[0].original_text, 'Linha 1\n\nLinha 3');
+  assert.equal(C.LIMITE_TEXTO, 10000);
+  assert.equal(C.capturar(est, 'a'.repeat(10000), ctx()).assuntos.length, 1, 'no limite entra');
+  assert.ok(C.semMudanca(C.capturar(est, 'a'.repeat(10001), ctx())), 'acima do limite não entra nem é cortado');
+});
+
+test('editarTexto: respeita o mesmo limite', () => {
+  const est = congelar(base());
+  const id = est.assuntos[0].id;
+  assert.equal(C.editarTexto(est, id, 'b'.repeat(10000), ctx()).assuntos.length, 1);
+  assert.ok(C.semMudanca(C.editarTexto(est, id, 'b'.repeat(10001), ctx())));
+});
+
+test('resumos copiados: quebras de linha da anotação viram espaço, uma linha por assunto', async () => {
+  const { pautaText } = await import('../../src/textos.js');
+  const t = pautaText('Ana', [{ id: 'x', text: 'Primeira linha\nsegunda linha', person: 'Ana', type: 'fazer', created: '2026-11-10' }], '2026-11-14');
+  assert.match(t, /Primeira linha segunda linha/);
+  assert.equal(t.split('\n').filter((l) => l.startsWith('•')).length, 1);
+});

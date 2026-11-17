@@ -171,7 +171,13 @@ input:focus, select:focus { border-color: var(--ring); }
 .quiet-list { list-style: none; margin: 0; padding: 0 4px; display: flex; flex-direction: column; gap: 8px; }
 .quiet-list li { display: flex; justify-content: space-between; gap: 10px; font-size: 15px; color: var(--muted); }
 .composer { display: flex; gap: 8px; padding: 10px; border-radius: 22px; background: var(--surface); border: 1px solid var(--line); }
-.composer input { height: 52px; border-color: var(--ring); }
+textarea.grow { width: 100%; min-height: 52px; max-height: 40vh; resize: none; background: var(--surface); color: var(--text); border: 2px solid var(--line-strong); border-radius: 16px; padding: 13px 16px; font: inherit; font-size: 17px; line-height: 1.35; outline: none; overflow-y: auto; }
+textarea.grow:focus { border-color: var(--ring); }
+.composer { align-items: flex-end; }
+.composer textarea.grow { border-color: var(--ring); }
+/* Anotações com várias linhas: mostram as quebras; nas listas ficam limitadas e abrem inteiras ao tocar (D-015). */
+.line > span:first-child, .focus-text, .clear-text, .hist li > span:first-child { white-space: pre-line; overflow-wrap: anywhere; }
+.line > span:first-child, .focus:not(.open) .focus-text { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; line-clamp: 4; overflow: hidden; }
 .composer .send { width: 52px; height: 52px; flex-shrink: 0; border: none; border-radius: 14px; background: var(--primary); color: var(--primary-ink); display: inline-flex; align-items: center; justify-content: center; }
 .hint { font-size: 13px; color: var(--muted); padding-left: 6px; }
 .empty { display: flex; flex-direction: column; gap: 6px; padding: 24px 12px; text-align: center; align-items: center; }
@@ -301,7 +307,7 @@ import * as Arm from './src/armazenamento.js';
 import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation as observationPuro } from './src/textos.js';
 (function () {
   'use strict';
-  const VERSAO = '1.0.11';
+  const VERSAO = '1.0.12';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -764,7 +770,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   function lineRow(i) {
     if (S.editing === i.id) {
       return `<li><form class="edit" id="edit-form" data-id="${i.id}"><label for="edit-input" class="sr">Editar anotação</label>
-        <input id="edit-input" value="${esc(i.text)}" autocomplete="off">
+        <textarea id="edit-input" class="grow" rows="1" autocomplete="off">${esc(i.text)}</textarea><p class="hint" id="limite" hidden></p>
         <div class="row" style="justify-content:flex-end"><button type="button" class="btn-s" data-act="edit-del" data-id="${i.id}">Apagar</button><button type="button" class="btn-s" data-act="edit-cancel">Cancelar</button><button type="submit" class="btn-s primary">Salvar</button></div></form></li>`;
     }
     const a = ageOf(i);
@@ -775,7 +781,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     return `<div class="balloon"><div class="row between"><span class="step">Passo 1 de 3</span><button class="link" data-act="tour-skip" style="min-height:32px">Pular</button></div>
       ${n ? `<p class="b-title">Pronto! Pode anotar mais, do jeito que vier.</p><p class="muted">Cada linha é um assunto. Quando quiser, siga para clarear.</p>
         <button class="btn-s primary" data-act="tour-2" style="align-self:flex-end">Próximo</button>`
-        : `<p class="b-title">Anote a primeira coisa que está na sua cabeça agora.</p><p class="muted">Sem pensar em tipo, pessoa ou prazo. Escreva aqui embaixo e aperte Enter.</p>`}</div>`;
+        : `<p class="b-title">Anote a primeira coisa que está na sua cabeça agora.</p><p class="muted">Sem pensar em tipo, pessoa ou prazo. Escreva aqui embaixo e guarde.</p>`}</div>`;
   }
   const meBtn = () => `<button class="me" data-act="go" data-to="perfil" aria-label="Perfil e configurações">${esc(myInitial())}</button>`;
   function scrAnotar() {
@@ -794,8 +800,20 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   const RASCUNHO = 'clarea-rascunho';
   const lerRascunho = () => { try { return localStorage.getItem(RASCUNHO) || ''; } catch (e) { return ''; } };
   const guardarRascunho = (v) => { try { if (v) localStorage.setItem(RASCUNHO, v); else localStorage.removeItem(RASCUNHO); } catch (e) { /* sem espaço ou bloqueado: segue sem rascunho */ } };
-  const dockAnotar = () => `<form class="composer" id="composer"><label for="new-line" class="sr">Nova anotação</label><input id="new-line" value="${esc(lerRascunho())}" autocomplete="off" placeholder="Escreva e aperte Enter" enterkeyhint="send"><button type="submit" class="send" aria-label="Guardar anotação">${IC.send}</button></form>
+  const dockAnotar = () => `<form class="composer" id="composer"><label for="new-line" class="sr">Nova anotação</label><textarea id="new-line" class="grow" rows="1" autocomplete="off" placeholder="${toqueGrosso() ? 'Escreva aqui e toque em enviar' : 'Escreva e aperte Enter (Shift+Enter quebra a linha)'}" enterkeyhint="${toqueGrosso() ? 'enter' : 'send'}">${esc(lerRascunho())}</textarea><button type="submit" class="send" aria-label="Guardar anotação">${IC.send}</button></form>
+      <p class="hint" id="limite" hidden></p>
       <p class="hint">Salvo na hora · use @ para pessoa e # para tema, se quiser</p>`;
+  /* Celular (toque): Enter quebra a linha e o botão guarda. Computador: Enter guarda e Shift+Enter quebra a linha (D-015). */
+  const toqueGrosso = () => !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
+  const crescer = (el) => { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight + 2, Math.round(window.innerHeight * 0.4)) + 'px'; };
+  const avisarLimite = (el) => {
+    const aviso = document.getElementById('limite');
+    if (!aviso || !el) return;
+    const n = el.value.trim().length, estourou = n > Casos.LIMITE_TEXTO;
+    aviso.hidden = !estourou;
+    aviso.textContent = estourou ? `Texto grande demais (${n.toLocaleString('pt-BR')} de ${Casos.LIMITE_TEXTO.toLocaleString('pt-BR')} caracteres). Divida em duas anotações. Nada foi cortado.` : '';
+    return estourou;
+  };
 
   /* =========================================================
      12. Clarear o dia (telas)
@@ -1235,6 +1253,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     const focado = devolverDigitado(digitado);
     if (focado) focado.focus();
     if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); if (el.setSelectionRange && el.value) el.setSelectionRange(el.value.length, el.value.length); } }
+    document.querySelectorAll('textarea.grow').forEach(crescer);
     persist();
   }
   function go(screen, focusId) { S.screen = screen; S.editing = null; S.sheet = null; S.personEdit = null; S.temaEdit = null; render(focusId); document.getElementById('main').scrollTop = 0; }
@@ -1411,9 +1430,11 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     const f = e.target;
     if (f.id === 'composer') {
       const inp = document.getElementById('new-line');
+      if (avisarLimite(inp)) return; // grande demais: mantém o texto e avisa
       if (addItem(inp.value)) { inp.value = ''; guardarRascunho(''); render('new-line'); }
     } else if (f.id === 'edit-form') {
-      const v = document.getElementById('edit-input').value.trim();
+      const campo = document.getElementById('edit-input'), v = campo.value.trim();
+      if (avisarLimite(campo)) return;
       if (byId(f.dataset.id) && v) commit(Casos.editarTexto(E, f.dataset.id, v, ctx()));
       S.editing = null; render();
     } else if (f.id === 'add-form') {
@@ -1444,6 +1465,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
 
   document.addEventListener('input', (e) => {
     const t = e.target;
+    if (t.id === 'new-line' || t.id === 'edit-input') { crescer(t); const a = document.getElementById('limite'); if (a && !a.hidden) avisarLimite(t); }
     if (t.id === 'new-line') guardarRascunho(t.value);
     if (t.id === 'busca') { S.q = t.value; document.getElementById('hist-list').innerHTML = histList(); }
     if (t.id === 'nome') { const p = document.getElementById('nome-preview'); if (p) p.textContent = t.value.trim() || 'você'; }
@@ -1454,7 +1476,14 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     if (t.id === 'perfil-nome') { const v = t.value.trim(); if (v) { S.name = v; persist(); } }
     if (t.id === 'file-in' && t.files && t.files[0]) { onImportFile(t.files[0]); t.value = ''; }
   });
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && S.sheet) { S.sheet = null; render(); } });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && S.sheet) { S.sheet = null; render(); }
+    const t = e.target;
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && t && (t.id === 'new-line' || t.id === 'edit-input') && !toqueGrosso()) {
+      e.preventDefault(); // computador: Enter guarda (Shift+Enter quebra a linha)
+      if (t.form) t.form.requestSubmit();
+    }
+  });
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && S.onboarded) { trazerDeFora().then(() => { checkReminder(); if (!digitando()) render(); }); }
   });
