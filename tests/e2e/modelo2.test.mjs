@@ -21,7 +21,8 @@ test('primeira abertura importa os dados do formato 1.0 uma única vez e deixa o
   ], { name: 'Pessoa Teste', people: ['Ana', 'Paulo'], temas: ['Obra'] });
   const { contexto, pagina } = await novaPagina(amb, v1);
   await pagina.goto(amb.url);
-  assert.ok(await pagina.locator('text=Esperando a Ana').count() >= 1);
+  assert.equal(await pagina.locator('button:text-is("1 assunto aguardando ▾")').count(), 1, 'aguardando fica na seção própria');
+  assert.ok(await pagina.locator('text=Cobrar o Paulo').count() >= 1);
   let a = await lerAssuntos(pagina);
   assert.deepEqual(textos(a), ['Esperando a Ana', 'Cobrar o Paulo', 'Anotado solto', 'Já resolvido']);
   assert.deepEqual([por(a, 'Esperando a Ana').status, por(a, 'Esperando a Ana').next_action], ['waiting', null]);
@@ -121,7 +122,7 @@ test('cópia de segurança sai no formato 2 e volta inteira numa instalação no
   await nova.pagina.goto(amb.url);
   await nova.pagina.waitForSelector('#file-in', { state: 'attached' });
   await nova.pagina.setInputFiles('#file-in', { name: 'copia.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(conteudo)) });
-  await nova.pagina.waitForSelector('text=Aguardando o banco', { timeout: 4000 });
+  await nova.pagina.waitForSelector('button:has-text("1 assunto aguardando")', { timeout: 4000 });
   const a = await lerAssuntos(nova.pagina);
   assert.deepEqual(a.map((x) => x.id), conteudo.assuntos.map((x) => x.id));
   assert.deepEqual([por(a, 'Aguardando o banco').status, por(a, 'Aguardando o banco').focus], ['waiting', true]);

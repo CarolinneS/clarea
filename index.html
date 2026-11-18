@@ -304,11 +304,12 @@ import { score as scorePuro, bySuggestion as bySuggestionPuro, focusList as focu
 import { estadoVazio, novoAssunto, validar as validarV2 } from './src/modelo.js';
 import { migrarParaV2, detectarFormato } from './src/migracao.js';
 import * as Casos from './src/casos.js';
+import { emEspera as emEsperaPuro, chegouODia as chegouODiaPuro, ordenar as ordenarEspera, semNovidade } from './src/aguardando.js';
 import * as Arm from './src/armazenamento.js';
 import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation as observationPuro } from './src/textos.js';
 (function () {
   'use strict';
-  const VERSAO = '1.0.17';
+  const VERSAO = '1.0.18';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -368,8 +369,9 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   const novos = () => S.items.filter((i) => i.status === 'novo');
   const abertos = () => S.items.filter((i) => i.status === 'aberto');
   const isSnoozed = (i) => i.snoozeUntil && i.snoozeUntil > today();
-  const visiveis = () => abertos().filter((i) => !isSnoozed(i));
-  const guardados = () => abertos().filter(isSnoozed);
+  const visiveis = () => abertos().filter((i) => !isSnoozed(i) && !emEsperaPuro(i, today()));
+  const emEspera = () => abertos().filter((i) => emEsperaPuro(i, today()));
+  const guardados = () => abertos().filter((i) => isSnoozed(i) && i.type !== 'esperando');
   const byId = (id) => S.items.find((i) => i.id === id);
   const doneToday = () => doneTodayPuro(S.items, today());
   const dayPct = () => dayPctPuro(doneToday(), visiveis().length);
@@ -383,9 +385,10 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   let E = estadoVazio(), DB = null, Ereal = null, avisouMemoria = false;
   const ctx = () => ({ hoje: today(), agora: new Date().toISOString() });
   const STATUS_TELA = { inbox: 'novo', in_progress: 'aberto', waiting: 'aberto', scheduled: 'aberto', done: 'resolvido', discarded: 'solto', archived: 'solto' };
+  const diaLocal = (t) => { const d = new Date(t); return isNaN(d) ? '' : iso(d); };
   function visao() {
     const nomeP = new Map(E.pessoas.map((x) => [x.id, x.name])), nomeT = new Map(E.temas.map((x) => [x.id, x.name]));
-    S.items = E.assuntos.map((a) => ({ id: a.id, text: a.text, created: a.created_day, status: STATUS_TELA[a.status] || 'aberto', type: Casos.tipoDe(a), person: nomeP.get(a.person_id) || '', tema: nomeT.get(a.topic_id) || '', snoozeUntil: a.resume_at || '', doneDate: a.completed_day || '', focus: a.focus }));
+    S.items = E.assuntos.map((a) => ({ id: a.id, text: a.text, created: a.created_day, status: STATUS_TELA[a.status] || 'aberto', type: Casos.tipoDe(a), person: nomeP.get(a.person_id) || '', tema: nomeT.get(a.topic_id) || '', snoozeUntil: a.resume_at || '', atualizado: diaLocal(a.updated_at), doneDate: a.completed_day || '', focus: a.focus }));
     S.people = E.pessoas.map((x) => x.name);
     S.temas = E.temas.map((x) => x.name);
     S.temasArq = E.temas.filter((x) => x.archived_at).map((x) => x.name);
@@ -909,7 +912,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   function itemCard(i) {
     const open = S.expanded === i.id;
     return `<li class="card focus ${open ? 'open' : ''}"><button class="focus-head" data-act="expand" data-id="${i.id}" aria-expanded="${open}">
-        <span class="stack-s grow" style="gap:6px;min-width:0"><span class="focus-text">${esc(i.text)}</span><span class="meta">${tp(i.type)}${i.person ? `<span>${esc(i.person)}</span>` : ''}${ageTag(i)}${i.tema ? `<span>${esc(i.tema)}</span>` : ''}</span></span>
+        <span class="stack-s grow" style="gap:6px;min-width:0"><span class="focus-text">${esc(i.text)}</span><span class="meta">${tp(i.type)}${i.person ? `<span>${esc(i.person)}</span>` : ''}${ageTag(i)}${i.tema ? `<span>${esc(i.tema)}</span>` : ''}</span>${chegouODiaPuro(i, today()) ? '<span class="small muted">Chegou o dia de acompanhar.</span>' : ''}</span>
         <span class="focus-chev" aria-hidden="true">${IC.chev || ''}</span></button>
       ${open ? actionsFor(i) : ''}</li>`;
   }
@@ -928,6 +931,20 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       <div class="row" style="gap:12px;flex-wrap:wrap;align-items:center"><button class="btn-s primary" data-act="clear-intro">Clarear o dia</button>
         <button class="link" data-act="toggle-novos" aria-expanded="${aberto}" style="min-height:36px">${aberto ? 'Ocultar anotações' : 'Ver anotações'}</button></div>
       ${aberto ? `<ul class="lines">${novos().slice().reverse().slice(0, lim('novos')).map(lineRow).join('')}</ul>${maisBtn('novos', n - lim('novos'))}<p class="xs muted">Toque numa linha para editar ou apagar.</p>` : ''}</div>`;
+  }
+  function esperaRow(i) {
+    const dias = i.atualizado ? Math.max(0, diffDays(i.atualizado, today())) : 0;
+    const meta = [i.person ? esc(i.person) : '', semNovidade(dias), i.snoozeUntil ? `retorno em ${dateShort(i.snoozeUntil)}` : 'sem data de retorno'].filter(Boolean);
+    return `<li class="card stack-s"><p>${esc(i.text)}</p><span class="small muted">${meta.join(' · ')}</span>
+      <div class="row" style="gap:8px"><button class="btn-s primary" data-act="do" data-how="resolvido" data-id="${i.id}">Chegou</button><button class="btn-s" data-act="adiar-open" data-id="${i.id}">${i.snoozeUntil ? 'Mudar retorno' : 'Definir retorno'}</button></div>
+      <button class="link quiet" data-act="espera-meu" data-id="${i.id}" style="align-self:flex-start;min-height:36px;font-size:14px">Voltar para o meu Hoje</button></li>`;
+  }
+  function secaoEspera() {
+    const lista = ordenarEspera(emEspera());
+    if (!lista.length) return '';
+    const aberto = !!S.showEspera;
+    return `<div class="stack-s"><button class="link" data-act="toggle-espera" aria-expanded="${aberto}" style="align-self:flex-start;min-height:36px">${plural(lista.length, 'assunto aguardando', 'assuntos aguardando')} ${aberto ? '▴' : '▾'}</button>
+      ${aberto ? `<p class="xs muted">Dependem de outra pessoa ou de um evento. Ficam fora do seu foco e do progresso do dia.</p><ul class="focus-list">${lista.map(esperaRow).join('')}</ul>` : ''}</div>`;
   }
   function scrHoje() {
     const vis = visiveis(), F = focusList(), foco = F.list, done = doneToday(), pct = dayPct();
@@ -951,6 +968,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       ${foco.length ? `<div class="row between"><span class="row" style="gap:8px"><h2 class="sec-title" style="margin:0">Foco de hoje</h2>${F.chosen ? '' : '<span class="small muted">sugerido</span>'}</span><button class="link" data-act="foco-open" style="min-height:36px">Mudar</button></div>
         <ul class="focus-list">${foco.map(itemCard).join('')}</ul>` : ''}
       ${gd ? `<button class="link" data-act="sheet" data-kind="guardados" style="align-self:flex-start">${plural(gd, 'assunto guardado', 'assuntos guardados')} para outro dia</button>` : ''}
+      ${secaoEspera()}
       ${Object.keys(per).length ? `<span class="label">Por pessoa</span><div class="people">
         ${Object.keys(per).sort((a, b) => per[b] - per[a]).map((p) => `<button class="person" data-act="sheet" data-kind="pauta" data-person="${esc(p)}">${ava(p, true)}<span>${esc(p)} · ${per[p]}</span></button>`).join('')}
         ${semPessoa ? `<button class="person" data-act="sheet" data-kind="sempessoa"><span class="ava lg none" style="border-radius:50%">·</span><span>Só você · ${semPessoa}</span></button>` : ''}</div>` : ''}
@@ -969,7 +987,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     if (!list.length) return `<div class="empty"><p>${S.items.length ? 'Nada encontrado com essa busca.' : 'O histórico aparece aqui depois das primeiras anotações.'}</p></div>`;
     const mostrados = list.slice(0, lim('hist'));
     return `${S.q.trim() ? `<p class="xs muted">${plural(list.length, 'resultado', 'resultados')}</p>` : ''}<ul class="hist">${mostrados.map((i) => {
-      const [lab, cls] = i.status === 'aberto' && isSnoozed(i) ? ['Amanhã', 'seg'] : STATUS[i.status] || ['', ''];
+      const [lab, cls] = i.status === 'aberto' && i.type === 'esperando' ? ['Aguardando', 'seg'] : i.status === 'aberto' && isSnoozed(i) ? ['Volta em ' + dateShort(i.snoozeUntil), 'seg'] : STATUS[i.status] || ['', ''];
       const meta = [typeLabel(i.type), i.person, i.tema].filter(Boolean).map(esc);
       return `<li><span>${esc(i.text)}</span><span class="meta"><span class="st ${cls}">${lab}</span>${meta.join(' · ')}${meta.length ? ' · ' : ''}anotado em ${dateShort(i.created)}</span></li>`;
     }).join('')}</ul><div class="stack-s">${maisBtn('hist', list.length - mostrados.length)}</div>`;
@@ -1225,10 +1243,10 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     } else if (s.kind === 'adiar') {
       const it = byId(s.id);
       if (!it) return '';
-      const amanha = addDays(today(), 1);
-      body = `<header class="row between"><h1 style="font-size:22px">Adiar para quando?</h1>${close}</header>
+      const amanha = addDays(today(), 1), espera = it.type === 'esperando';
+      body = `<header class="row between"><h1 style="font-size:22px">${espera ? 'Voltar a olhar quando?' : 'Adiar para quando?'}</h1>${close}</header>
         <p class="small muted">${esc(it.text)}</p>
-        <p class="small muted">Ele sai do seu Hoje e volta na data escolhida.</p>
+        <p class="small muted">${espera ? 'Ele continua aguardando e volta ao seu Hoje na data escolhida.' : 'Ele sai do seu Hoje e volta na data escolhida.'}</p>
         <div class="stack-s">
           <button class="btn btn-primary" data-act="adiar-ok" data-dias="1">Amanhã · ${dateShort(amanha)}</button>
           <button class="btn" data-act="adiar-ok" data-dias="3">Em 3 dias · ${dateShort(addDays(today(), 3))}</button>
@@ -1236,7 +1254,8 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
         </div>
         <form class="stack-s" id="adiar-form"><label class="label" for="adiar-data">Ou escolher outra data</label>
           <input id="adiar-data" type="date" min="${amanha}" value="${amanha}" required>
-          <button class="btn" type="submit">Adiar até essa data</button></form>`;
+          <button class="btn" type="submit">${espera ? 'Definir retorno' : 'Adiar até essa data'}</button></form>
+        ${espera && it.snoozeUntil ? `<button class="link quiet" data-act="sem-retorno" data-id="${it.id}" style="align-self:flex-start;min-height:36px">Sem data de retorno</button>` : ''}`;
     } else if (s.kind === 'guardados') {
       const list = guardados().sort((a, b) => (a.snoozeUntil < b.snoozeUntil ? -1 : a.snoozeUntil > b.snoozeUntil ? 1 : 0));
       body = `<header class="row between"><h1 style="font-size:22px">Guardados para outro dia</h1>${close}</header>
@@ -1340,11 +1359,12 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   }
   /* Guardar para outro dia (E3.2, HJ-06): até 2 anos à frente; o assunto volta sozinho na data. */
   function guardarAte(id, dias) {
-    if (!byId(id)) return;
+    const it0 = byId(id);
+    if (!it0) return;
     if (!(dias >= 1)) { toast('Escolha uma data a partir de amanhã.'); return; }
     if (dias > 730) { toast('Escolha uma data de até 2 anos à frente.'); return; }
     S.undo = { inv: commit(Casos.adiar(E, id, ctx(), dias)) };
-    toast(`Guardado até ${dateShort(addDays(today(), dias))}. Ele volta nessa data.`, true);
+    toast(it0.type === 'esperando' ? `Retorno em ${dateShort(addDays(today(), dias))}. Continua aguardando.` : `Guardado até ${dateShort(addDays(today(), dias))}. Ele volta nessa data.`, true);
     S.expanded = null; S.sheet = null;
     render();
   }
@@ -1450,6 +1470,9 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       case 'adiar-open': S.sheet = { kind: 'adiar', id: el.dataset.id }; render(); break;
       case 'adiar-ok': guardarAte(S.sheet && S.sheet.id, Number(el.dataset.dias)); break;
       case 'trazer': { const id = el.dataset.id; if (!byId(id)) return; S.undo = { inv: commit(Casos.trazerDeVolta(E, id, ctx())) }; toast('Voltou para o seu Hoje.', true); render(); break; }
+      case 'toggle-espera': S.showEspera = !S.showEspera; render(); break;
+      case 'espera-meu': { const id = el.dataset.id; if (!byId(id)) return; S.undo = { inv: commit(Casos.voltarParaMim(E, id, ctx())) }; toast('Voltou para o seu Hoje.', true); render(); break; }
+      case 'sem-retorno': { const id = el.dataset.id; if (!byId(id)) return; S.undo = { inv: commit(Casos.trazerDeVolta(E, id, ctx())) }; S.sheet = null; toast('Retorno removido. Continua aguardando.', true); render(); break; }
       case 'sheet': S.sheet = { kind: el.dataset.kind, person: el.dataset.person }; render(); break;
       case 'sheet-close': case 'sheet-close-bg': S.sheet = null; render(); break;
       case 'copy': {
