@@ -118,3 +118,11 @@ test('sugestão: continua achando pessoa citada de verdade', () => {
   };
   for (const [t, esperado] of Object.entries(casos)) assert.equal(suggest(t, ctx()).person, esperado, t);
 });
+
+import { proximaSegunda } from '../../src/util.js';
+test('proximaSegunda: sempre depois de hoje, inclusive quando hoje é segunda', () => {
+  assert.equal(proximaSegunda('2026-11-18'), '2026-11-23'); // quarta
+  assert.equal(proximaSegunda('2026-11-22'), '2026-11-23'); // domingo
+  assert.equal(proximaSegunda('2026-11-23'), '2026-11-30'); // segunda
+  assert.equal(proximaSegunda('2026-12-28'), '2027-01-04'); // virada de ano
+});
