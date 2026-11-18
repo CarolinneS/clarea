@@ -1076,17 +1076,42 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   /* =========================================================
      16. Cópia de segurança
      ========================================================= */
-  function exportBackup() {
+  /* No app do Android (Capacitor) o WebView não baixa arquivos como o navegador: a cópia é
+     gravada no cache do app e entregue pela folha de compartilhamento (Drive, e-mail, Arquivos...). */
+  function pluginNativo(nome) {
+    try {
+      const Cap = window.Capacitor;
+      const nativo = !!(Cap && ((Cap.getPlatform && Cap.getPlatform() !== 'web') || (Cap.isNativePlatform && Cap.isNativePlatform())));
+      return nativo && Cap.registerPlugin ? Cap.registerPlugin(nome) : null;
+    } catch (e) { return null; }
+  }
+  function copiaFeita(mensagem) {
+    if (!S.demo) { S.lastBackup = today(); persist(); }
+    toast(mensagem);
+    render();
+  }
+  async function exportBackup() {
     const data = JSON.stringify({ app: 'clarea', ...structuredClone(Ereal || E), config: configDeS(), savedAt: new Date().toISOString() }, null, 2);
+    const nome = `clarea-copia-${today()}.json`;
+    const Fs = pluginNativo('Filesystem'), Share = pluginNativo('Share');
+    if (Fs && Share) {
+      try {
+        const r = await Fs.writeFile({ path: nome, data, directory: 'CACHE', encoding: 'utf8' });
+        await Share.share({ title: 'Cópia de segurança do Clarea', files: [r.uri], dialogTitle: 'Guardar a cópia' });
+        copiaFeita('Cópia pronta. Se você a guardou (e-mail, nuvem ou Arquivos), está segura.');
+      } catch (e) {
+        const cancelou = e && /cancel/i.test(String(e.message || e));
+        toast(cancelou ? 'Cópia cancelada. Nada foi guardado.' : 'Não consegui gerar a cópia. Tente de novo.');
+      }
+      return;
+    }
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url; a.download = `clarea-copia-${today()}.json`;
+    a.href = url; a.download = nome;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 3000);
-    if (!S.demo) { S.lastBackup = today(); persist(); }
-    toast('Cópia salva. Guarde o arquivo num lugar seguro, como o seu e-mail ou nuvem.');
-    render();
+    copiaFeita('Cópia salva. Guarde o arquivo num lugar seguro, como o seu e-mail ou nuvem.');
   }
   /* Apagar tudo é irreversível: explica o que some, quanto, e oferece salvar uma cópia antes (CAP-05, D-015). */
   function resetConfirm() {

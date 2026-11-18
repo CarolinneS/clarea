@@ -35,7 +35,7 @@ jobs:
       # O Capacitor (e o plugin App, do botão Voltar) é instalado só aqui, dentro do fluxo (não vai para o repositório).
       # Sem --no-save de propósito: o 'cap sync' só reconhece plugins listados no package.json.
       - name: Instalar o Capacitor 8 (só neste fluxo)
-        run: npm install --no-audit --no-fund @capacitor/core@^8 @capacitor/cli@^8 @capacitor/android@^8 @capacitor/app@^8
+        run: npm install --no-audit --no-fund @capacitor/core@^8 @capacitor/cli@^8 @capacitor/android@^8 @capacitor/app@^8 @capacitor/filesystem@^8 @capacitor/share@^8
 
       - name: Copiar os arquivos do app para www/
         run: node scripts/preparar-www.mjs
@@ -46,10 +46,10 @@ jobs:
       - name: Sincronizar
         run: npx cap sync android
 
-      - name: Conferir que o plugin do botão Voltar entrou no app
+      - name: Conferir que os plugins (Voltar, arquivos e compartilhar) entraram no app
         run: |
           cat android/app/src/main/assets/capacitor.plugins.json
-          grep -q "capacitorjs.plugins.app.AppPlugin" android/app/src/main/assets/capacitor.plugins.json
+          for p in "plugins.app.AppPlugin" "plugins.filesystem.FilesystemPlugin" "plugins.share.SharePlugin"; do grep -q "$p" android/app/src/main/assets/capacitor.plugins.json || { echo "FALTA o plugin $p"; exit 1; }; done
 
       - name: Aceitar as licenças do Android SDK
         run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
