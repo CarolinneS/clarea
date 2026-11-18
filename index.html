@@ -308,7 +308,7 @@ import * as Arm from './src/armazenamento.js';
 import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation as observationPuro } from './src/textos.js';
 (function () {
   'use strict';
-  const VERSAO = '1.0.14';
+  const VERSAO = '1.0.15';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -607,7 +607,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     let q = novos().sort((a, b) => ageOf(b) - ageOf(a));
     if (onlyOldest) q = q.slice(0, 3);
     S.ringFrom = dayPct();
-    S.clear = { queue: q.map((i) => i.id), idx: 0, hist: [], stats: { org: 0, res: 0, solto: 0 }, adding: null, sel: null, sug: null };
+    S.clear = { queue: q.map((i) => i.id), idx: 0, hist: [], stats: { org: 0, res: 0, solto: 0, skip: 0 }, adding: null, sel: null, sug: null };
     loadSel();
     S.screen = 'clarear';
   }
@@ -623,7 +623,8 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   function finishItem(fazMudanca, statKey) {
     const it = curItem();
     if (!it) return;
-    const inv = commit(fazMudanca(it));
+    const mudanca = fazMudanca(it);
+    const inv = mudanca ? commit(mudanca) : null;
     S.clear.hist.push({ id: it.id, inv, k: statKey });
     S.clear.stats[statKey]++;
     S.clear.idx++;
@@ -885,13 +886,13 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
         <button class="link quiet" data-act="foco-skip" style="align-self:center">Pular e usar as sugestões</button></div>`;
   }
   function scrResumo() {
-    const st = S.clear ? S.clear.stats : { org: 0, res: 0, solto: 0 };
+    const st = S.clear ? S.clear.stats : { org: 0, res: 0, solto: 0, skip: 0 };
     const seg = abertos().length, restam = novos().length;
     const nf = visiveis().filter((i) => i.focus).length;
     return `${demoBar()}<section class="stack center" style="padding-top:40px">
         ${lens(150, S.ringFrom, 'ring-resumo')}
         <h1 class="big">Dia clareado.</h1>
-        <p class="lead">${plural(st.org, 'organizado', 'organizados')} · ${plural(st.res, 'resolvido', 'resolvidos')} · ${st.solto} deixado${st.solto === 1 ? '' : 's'} pra lá</p>
+        <p class="lead">${plural(st.org, 'organizado', 'organizados')} · ${plural(st.res, 'resolvido', 'resolvidos')} · ${st.solto} deixado${st.solto === 1 ? '' : 's'} pra lá${st.skip ? ` · ${plural(st.skip, 'ficou para depois', 'ficaram para depois')}` : ''}</p>
         <p class="muted">${nf ? `Amanhã começa com ${plural(nf, 'assunto', 'assuntos')} no foco, ${nf === 1 ? 'escolhido' : 'escolhidos'} por você.` : `Amanhã começa com ${plural(seg, 'assunto', 'assuntos')} seguindo.`}${restam ? ` ${plural(restam, 'anotação ficou', 'anotações ficaram')} para outro momento.` : ''}</p></section>
       <div class="grow"></div>
       <button class="btn btn-primary" data-act="resumo-ok">Ver meu Hoje</button>`;
@@ -1371,13 +1372,14 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       case 'pick': { const f = el.dataset.field, v = el.dataset.val; S.clear.sel[f] = norm(S.clear.sel[f]) === norm(v) ? '' : v; render(); break; }
       case 'add': S.clear.adding = el.dataset.field; render('add-form-in'); break;
       case 'clear-ok': finishItem((it) => Casos.organizar(E, it.id, { tipo: S.clear.sel.type, pessoa: S.clear.sel.person, tema: S.clear.sel.tema }, ctx()), 'org'); render(); document.getElementById('main').scrollTop = 0; break;
-      case 'clear-skip': finishItem((it) => Casos.organizar(E, it.id, {}, ctx()), 'org'); render(); break;
+      /* Pular este (P-014, D-017): não muda o assunto. Ele continua na caixa de entrada, não conta como organizado e volta no próximo Clarear. */
+      case 'clear-skip': finishItem(() => null, 'skip'); render(); break;
       case 'clear-res': finishItem((it) => { const m1 = Casos.organizar(E, it.id, { tipo: S.clear.sel.type, pessoa: S.clear.sel.person, tema: S.clear.sel.tema }, ctx()); return Casos.unir(m1, Casos.resolver(Casos.aplicar(E, m1), it.id, ctx())); }, 'res'); render(); break;
       case 'clear-solto': finishItem((it) => Casos.deixarPraLa(E, it.id, ctx()), 'solto'); render(); break;
       case 'clear-undo': {
         const h = S.clear.hist.pop();
         if (!h) return;
-        commit(h.inv);
+        if (h.inv) commit(h.inv);
         S.clear.stats[h.k]--;
         S.clear.idx--;
         loadSel();
