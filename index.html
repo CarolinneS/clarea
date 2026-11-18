@@ -1504,19 +1504,48 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     if (document.visibilityState === 'visible' && S.onboarded) { trazerDeFora().then(() => { checkReminder(); if (!digitando()) render(); }); }
   });
   window.addEventListener('pagehide', () => { persist(); });
-  /* Voltar do Android (só no app do Capacitor): fecha o que está aberto, volta uma tela
-     usando o próprio botão "Voltar" da tela, e só sai do app quando já está em Hoje. */
+  /* Voltar do Android (só no app do Capacitor). Fecha o que está aberto, volta uma tela pelo
+     botão "Voltar" da própria tela e, em Hoje, avisa e sai no segundo toque.
+     Dois caminhos que se complementam: o plugin App (decide tudo) e, se ele não responder,
+     o histórico do WebView (entrada "sentinela"). */
   try {
-    const AppNativo = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App;
-    if (AppNativo && AppNativo.addListener) {
-      AppNativo.addListener('backButton', () => {
-        if (S.sheet) { S.sheet = null; render(); return; }
-        if (S.editing) { S.editing = null; render(); return; }
+    const Cap = window.Capacitor;
+    const nativo = !!(Cap && ((Cap.getPlatform && Cap.getPlatform() !== 'web') || (Cap.isNativePlatform && Cap.isNativePlatform())));
+    if (nativo) {
+      let App = null;
+      try { App = Cap.registerPlugin ? Cap.registerPlugin('App') : null; } catch (e) { App = null; }
+      const voltarUmNivel = () => {
+        if (S.sheet) { S.sheet = null; render(); return true; }
+        if (S.editing) { S.editing = null; render(); return true; }
         const voltar = document.querySelector('#main .icon-btn[aria-label^="Voltar"]');
-        if (voltar) { voltar.click(); return; }
-        if (S.screen !== 'hoje' && S.onboarded) { go('hoje'); return; }
-        AppNativo.exitApp();
+        if (voltar) { voltar.click(); return true; }
+        if (S.screen !== 'hoje' && S.onboarded) { go('hoje'); return true; }
+        return false;
+      };
+      let saindo = false;
+      // devolve true se o app deve sair agora
+      const aoVoltar = () => {
+        if (voltarUmNivel()) { saindo = false; return false; }
+        if (!saindo) { saindo = true; toast('Toque em voltar de novo para sair.'); setTimeout(() => { saindo = false; }, 2500); return false; }
+        return true;
+      };
+      const marcar = () => { try { if (!(history.state && history.state.clarea)) history.pushState({ clarea: 'sentinela' }, ''); } catch (e) { /* ignora */ } };
+      marcar();
+      let viaPlugin = false;
+      try {
+        if (App && App.addListener) {
+          const r = App.addListener('backButton', () => { viaPlugin = true; if (aoVoltar() && App.exitApp) App.exitApp(); });
+          if (r && r.catch) r.catch(() => { viaPlugin = false; });
+        }
+      } catch (e) { viaPlugin = false; }
+      window.addEventListener('popstate', () => {
+        if (viaPlugin) return;
+        const sair = aoVoltar();
+        if (sair) { try { if (App && App.exitApp) { App.exitApp(); return; } } catch (e) { /* ignora */ } history.back(); return; }
+        marcar();
       });
+      // garante que sempre haja uma entrada para o Voltar consumir
+      document.addEventListener('click', () => { if (!viaPlugin) marcar(); }, true);
     }
   } catch (e) { /* fora do app nativo não faz nada */ }
   if (window.matchMedia) { try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (S.theme === 'system') applyTheme(); }); } catch (e) { /* navegador antigo */ } }
