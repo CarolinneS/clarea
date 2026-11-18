@@ -288,3 +288,17 @@ test('trazerDeVolta: Agendado volta a Em andamento sem data; Aguardando continua
   const inv = C.inverter(ag, m);
   assert.equal(ap(ap(ag, m), inv).assuntos.find((a) => a.id === emAnd.id).resume_at, '2026-11-19');
 });
+
+test('voltarParaMim: Aguardando vira Em andamento sem data de retorno e dá para desfazer; outros estados não mudam', () => {
+  const est = base();
+  const espera = est.assuntos.find((a) => a.status === 'waiting');
+  const comData = ap(est, C.adiar(est, espera.id, ctx(), 4));
+  const m = C.voltarParaMim(comData, espera.id, ctx());
+  const novo = m.assuntos[0];
+  assert.deepEqual([novo.status, novo.resume_at], ['in_progress', null]);
+  const inv = C.inverter(comData, m);
+  const volta = ap(ap(comData, m), inv).assuntos.find((a) => a.id === espera.id);
+  assert.deepEqual([volta.status, volta.resume_at], ['waiting', '2026-11-18']);
+  const emAnd = est.assuntos.find((a) => a.status === 'in_progress');
+  assert.ok(C.semMudanca(C.voltarParaMim(est, emAnd.id, ctx())));
+});

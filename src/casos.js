@@ -121,6 +121,14 @@ export function trazerDeVolta(est, id, ctx) {
   return m;
 }
 
+/** Voltar para o meu Hoje: deixa de aguardar e passa a ser um assunto meu (Em andamento), sem data de retorno. */
+export function voltarParaMim(est, id, ctx) {
+  const a = achar(est, id), m = mudancaVazia();
+  if (a.status !== 'waiting') return m;
+  m.assuntos.push(tocar(a, ctx, { status: 'in_progress', resume_at: null }));
+  return m;
+}
+
 /** Deixar pra lá: sai da frente e fica no histórico. */
 export function deixarPraLa(est, id, ctx) {
   const a = achar(est, id), m = mudancaVazia();
