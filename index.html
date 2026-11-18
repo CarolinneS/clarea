@@ -308,7 +308,7 @@ import * as Arm from './src/armazenamento.js';
 import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation as observationPuro } from './src/textos.js';
 (function () {
   'use strict';
-  const VERSAO = '1.0.16';
+  const VERSAO = '1.0.17';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -903,10 +903,8 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
      ========================================================= */
   function actionsFor(i) {
     return `<div class="actions"><button class="act good" data-act="do" data-how="resolvido" data-id="${i.id}">Resolvido</button>
-      <button class="act" data-act="do" data-how="amanha" data-id="${i.id}">Amanhã</button>
-      <button class="act" data-act="adiar-open" data-id="${i.id}">Outro dia</button>
-      <button class="act soft" data-act="do" data-how="solto" data-id="${i.id}">Deixar pra lá</button></div>
-      <div class="row" style="padding:0 16px 12px;gap:12px"><button class="link quiet" data-act="item-edit" data-id="${i.id}" style="min-height:36px;font-size:14px">Editar</button></div>`;
+      <button class="act" data-act="adiar-open" data-id="${i.id}">Adiar</button></div>
+      <div class="row" style="padding:0 16px 12px;gap:20px"><button class="link quiet" data-act="item-edit" data-id="${i.id}" style="min-height:36px;font-size:14px">Editar</button><button class="link quiet" data-act="do" data-how="solto" data-id="${i.id}" style="min-height:36px;font-size:14px">Deixar pra lá</button></div>`;
   }
   function itemCard(i) {
     const open = S.expanded === i.id;
@@ -1228,15 +1226,17 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       const it = byId(s.id);
       if (!it) return '';
       const amanha = addDays(today(), 1);
-      body = `<header class="row between"><h1 style="font-size:22px">Guardar para quando?</h1>${close}</header>
+      body = `<header class="row between"><h1 style="font-size:22px">Adiar para quando?</h1>${close}</header>
         <p class="small muted">${esc(it.text)}</p>
+        <p class="small muted">Ele sai do seu Hoje e volta na data escolhida.</p>
         <div class="stack-s">
+          <button class="btn btn-primary" data-act="adiar-ok" data-dias="1">Amanhã · ${dateShort(amanha)}</button>
           <button class="btn" data-act="adiar-ok" data-dias="3">Em 3 dias · ${dateShort(addDays(today(), 3))}</button>
           <button class="btn" data-act="adiar-ok" data-dias="${diffDays(today(), proximaSegunda(today()))}">Próxima segunda · ${dateShort(proximaSegunda(today()))}</button>
         </div>
-        <form class="stack-s" id="adiar-form"><label class="label" for="adiar-data">Escolher uma data</label>
+        <form class="stack-s" id="adiar-form"><label class="label" for="adiar-data">Ou escolher outra data</label>
           <input id="adiar-data" type="date" min="${amanha}" value="${amanha}" required>
-          <button class="btn btn-primary" type="submit">Guardar até essa data</button></form>`;
+          <button class="btn" type="submit">Adiar até essa data</button></form>`;
     } else if (s.kind === 'guardados') {
       const list = guardados().sort((a, b) => (a.snoozeUntil < b.snoozeUntil ? -1 : a.snoozeUntil > b.snoozeUntil ? 1 : 0));
       body = `<header class="row between"><h1 style="font-size:22px">Guardados para outro dia</h1>${close}</header>

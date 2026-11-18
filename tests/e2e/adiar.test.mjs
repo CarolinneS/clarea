@@ -13,11 +13,11 @@ const semDicas = { anotar: true, 'clear-intro': true, hoje: true, historico: tru
 const um = () => estadoBase([assunto('Ligar para o contador', { focus: true })], { tips: semDicas });
 const dd = (d) => d.slice(8, 10) + '/' + d.slice(5, 7);
 async function abrirOutroDia(pagina) {
-  await pagina.click('.focus.open button:text-is("Outro dia")');
-  await pagina.waitForSelector('text=Guardar para quando?');
+  await pagina.click('.focus.open button:text-is("Adiar")');
+  await pagina.waitForSelector('text=Adiar para quando?');
 }
 
-test('Outro dia > Em 3 dias: o assunto fica agendado com a data certa e o Hoje mostra a lista', async () => {
+test('Adiar > Em 3 dias: o assunto fica agendado com a data certa e o Hoje mostra a lista', async () => {
   const { contexto, pagina } = await novaPagina(amb, um());
   await pagina.goto(amb.url);
   await abrirOutroDia(pagina);
@@ -30,7 +30,7 @@ test('Outro dia > Em 3 dias: o assunto fica agendado com a data certa e o Hoje m
   await contexto.close();
 });
 
-test('Outro dia > Próxima segunda e Escolher data', async () => {
+test('Adiar > Próxima segunda e Escolher data', async () => {
   const seg = await novaPagina(amb, um());
   await seg.pagina.goto(amb.url);
   await abrirOutroDia(seg.pagina);
@@ -43,7 +43,7 @@ test('Outro dia > Próxima segunda e Escolher data', async () => {
   await dt.pagina.goto(amb.url);
   await abrirOutroDia(dt.pagina);
   await dt.pagina.fill('#adiar-data', addDays(hoje(), 10));
-  await dt.pagina.click('button:has-text("Guardar até essa data")');
+  await dt.pagina.click('button:has-text("Adiar até essa data")');
   await dt.pagina.waitForSelector(`text=Guardado até ${dd(addDays(hoje(), 10))}`);
   assert.equal((await lerAssuntos(dt.pagina))[0].v2.resume_at, addDays(hoje(), 10));
   await dt.contexto.close();
@@ -76,11 +76,25 @@ test('lista de guardados mostra a data e Trazer de volta devolve o assunto ao Ho
   await contexto.close();
 });
 
-test('as quatro ações cabem na tela estreita, sem cortar o texto', async () => {
+test('Adiar > Amanhã guarda para amanhã e explica o que acontece', async () => {
+  const { contexto, pagina } = await novaPagina(amb, um());
+  await pagina.goto(amb.url);
+  await abrirOutroDia(pagina);
+  assert.equal(await pagina.locator('text=sai do seu Hoje e volta na data escolhida').count(), 1);
+  await pagina.click('button:has-text("Amanhã")');
+  await pagina.waitForSelector(`text=Guardado até ${dd(addDays(hoje(), 1))}`);
+  const a = (await lerAssuntos(pagina))[0].v2;
+  assert.deepEqual([a.status, a.resume_at], ['scheduled', addDays(hoje(), 1)]);
+  await contexto.close();
+});
+
+test('o assunto tem 2 botões (Resolvido, Adiar) e "Deixar pra lá" é um link ao lado de Editar', async () => {
   const { contexto, pagina } = await novaPagina(amb, um(), { viewport: { width: 360, height: 740 } });
   await pagina.goto(amb.url);
-  const caixas = await pagina.locator('.focus.open .actions .act').evaluateAll((els) => els.map((e) => ({ t: e.textContent.trim(), cortado: e.scrollWidth > e.clientWidth, w: e.getBoundingClientRect().width })));
-  assert.deepEqual(caixas.map((c) => c.t), ['Resolvido', 'Amanhã', 'Outro dia', 'Deixar pra lá']);
+  const caixas = await pagina.locator('.focus.open .actions .act').evaluateAll((els) => els.map((e) => ({ t: e.textContent.trim(), cortado: e.scrollWidth > e.clientWidth })));
+  assert.deepEqual(caixas.map((c) => c.t), ['Resolvido', 'Adiar']);
   caixas.forEach((c) => assert.equal(c.cortado, false, `${c.t} cortado`));
+  assert.equal(await pagina.locator('.focus.open button.link:text-is("Deixar pra lá")').count(), 1);
+  assert.equal(await pagina.locator('.focus.open button.link:text-is("Editar")').count(), 1);
   await contexto.close();
 });

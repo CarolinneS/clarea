@@ -60,8 +60,10 @@ test('Resolvido, Amanhã e Deixar pra lá são gravados no modelo 2.0, sobrevive
   const card = (t) => pagina.locator('.focus', { hasText: t });
   const acao = async (t, how) => {
     const c = pagina.locator('.focus', { hasText: t }).first(), b = c.locator(`[data-how="${how}"]`);
-    if (!(await b.isVisible())) await c.locator('[data-act="expand"]').first().click();
-    await b.click();
+    const alvo = how === 'amanha' ? c.locator('[data-act="adiar-open"]') : b;
+    if (!(await alvo.isVisible())) await c.locator('[data-act="expand"]').first().click();
+    await alvo.click();
+    if (how === 'amanha') await pagina.click('[data-act="adiar-ok"][data-dias="1"]');
   };
   await acao('Um', 'resolvido');
   await acao('Dois', 'amanha');
