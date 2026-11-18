@@ -1082,7 +1082,10 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     try {
       const Cap = window.Capacitor;
       const nativo = !!(Cap && ((Cap.getPlatform && Cap.getPlatform() !== 'web') || (Cap.isNativePlatform && Cap.isNativePlatform())));
-      return nativo && Cap.registerPlugin ? Cap.registerPlugin(nome) : null;
+      if (!nativo) return null;
+      // Sem empacotador não há @capacitor/core no app: a ponte nativa só expõe Capacitor.Plugins.<nome>.
+      if (Cap.Plugins && Cap.Plugins[nome]) return Cap.Plugins[nome];
+      return Cap.registerPlugin ? Cap.registerPlugin(nome) : null;
     } catch (e) { return null; }
   }
   function copiaFeita(mensagem) {
@@ -1105,6 +1108,8 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       }
       return;
     }
+    const dentroDoApp = !!window.Capacitor && pluginNativo('Filesystem') === null && window.Capacitor.getPlatform && window.Capacitor.getPlatform() !== 'web';
+    if (dentroDoApp) { toast('Este app não encontrou os recursos de arquivo. Avise a equipe (plugins ausentes).'); return; }
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1538,7 +1543,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     const nativo = !!(Cap && ((Cap.getPlatform && Cap.getPlatform() !== 'web') || (Cap.isNativePlatform && Cap.isNativePlatform())));
     if (nativo) {
       let App = null;
-      try { App = Cap.registerPlugin ? Cap.registerPlugin('App') : null; } catch (e) { App = null; }
+      App = pluginNativo('App');
       const voltarUmNivel = () => {
         if (S.sheet) { S.sheet = null; render(); return true; }
         if (S.editing) { S.editing = null; render(); return true; }
