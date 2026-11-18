@@ -1,4 +1,4 @@
-# Clarea · versão 1.0.18
+# Clarea · versão 1.0.19
 
 > Escreva como pensa. O Clarea organiza no fim do dia.
 
@@ -52,13 +52,17 @@ feat: MVP do Clarea como app instalável (Anotar, Clarear o dia, Hoje)
 ## Como publicar uma atualização
 
 1. Altere os arquivos.
-2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.18`). Um teste automático avisa se algum ficar diferente.
+2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.19`). Um teste automático avisa se algum ficar diferente.
 3. Envie para o GitHub. Quem já tem o app instalado recebe a versão nova ao abrir o app (às vezes é preciso fechar e abrir de novo).
+
+## O que mudou na 1.0.19
+
+- **Aguardando, botões mais claros:** cada assunto aguardando agora tem **Resolvido** (a espera acabou e o assunto está encerrado) e **Recebi resposta** (a resposta veio e o assunto volta ao seu Hoje). **Definir retorno** / **Mudar retorno** virou link pequeno. Saíram "Chegou" e "Voltar para o meu Hoje".
 
 ## O que mudou na 1.0.18
 
 - **Aguardando no Hoje:** assuntos que dependem de outra pessoa ou de um evento ficam numa seção recolhida ("N assuntos aguardando"), fora do foco e do progresso do dia. Se não houver nenhum, a seção não aparece.
-- Cada um mostra a pessoa, o tempo sem novidade (em linguagem neutra) e o retorno. Ações: **Chegou** (resolve), **Definir retorno** / **Mudar retorno** (data opcional) e **Voltar para o meu Hoje**.
+- Cada um mostra a pessoa, o tempo sem novidade (em linguagem neutra) e o retorno. Ações: **Resolvido**, **Recebi resposta** e **Definir retorno** (data opcional).
 - Quando chega o dia de retorno, o assunto volta ao foco com o aviso "Chegou o dia de acompanhar."
 - No Histórico, assuntos guardados mostram "Volta em dd/mm" (antes diziam sempre "Amanhã").
 

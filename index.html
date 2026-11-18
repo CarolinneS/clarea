@@ -309,7 +309,7 @@ import * as Arm from './src/armazenamento.js';
 import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation as observationPuro } from './src/textos.js';
 (function () {
   'use strict';
-  const VERSAO = '1.0.18';
+  const VERSAO = '1.0.19';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -936,8 +936,8 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     const dias = i.atualizado ? Math.max(0, diffDays(i.atualizado, today())) : 0;
     const meta = [i.person ? esc(i.person) : '', semNovidade(dias), i.snoozeUntil ? `retorno em ${dateShort(i.snoozeUntil)}` : 'sem data de retorno'].filter(Boolean);
     return `<li class="card stack-s"><p>${esc(i.text)}</p><span class="small muted">${meta.join(' · ')}</span>
-      <div class="row" style="gap:8px"><button class="btn-s primary" data-act="do" data-how="resolvido" data-id="${i.id}">Chegou</button><button class="btn-s" data-act="adiar-open" data-id="${i.id}">${i.snoozeUntil ? 'Mudar retorno' : 'Definir retorno'}</button></div>
-      <button class="link quiet" data-act="espera-meu" data-id="${i.id}" style="align-self:flex-start;min-height:36px;font-size:14px">Voltar para o meu Hoje</button></li>`;
+      <div class="row" style="gap:8px"><button class="btn-s primary" data-act="do" data-how="resolvido" data-id="${i.id}">Resolvido</button><button class="btn-s" data-act="espera-meu" data-id="${i.id}">Recebi resposta</button></div>
+      <button class="link quiet" data-act="adiar-open" data-id="${i.id}" style="align-self:flex-start;min-height:36px;font-size:14px">${i.snoozeUntil ? 'Mudar retorno' : 'Definir retorno'}</button></li>`;
   }
   function secaoEspera() {
     const lista = ordenarEspera(emEspera());
