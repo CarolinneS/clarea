@@ -9,6 +9,8 @@ export const plural = (n, um, varios) => `${n} ${n === 1 ? um : varios}`;
 export const iso = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 export const addDays = (s, n) => { const [y, m, d] = s.split('-').map(Number); return iso(new Date(y, m - 1, d + n)); };
 export const diffDays = (a, b) => { const [y1, m1, d1] = a.split('-').map(Number), [y2, m2, d2] = b.split('-').map(Number); return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 864e5); };
+/** Data da próxima segunda-feira, sempre depois de `hoje` (se hoje é segunda, é daqui a 7 dias). */
+export const proximaSegunda = (hoje) => { const [y, m, d] = hoje.split('-').map(Number); const dow = new Date(y, m - 1, d).getDay(); return addDays(hoje, ((1 - dow + 7) % 7) || 7); };
 /** Idade em dias de um assunto. `hoje` é a data de hoje (AAAA-MM-DD). */
 export const ageOf = (i, hoje) => Math.max(0, diffDays(i.created, hoje));
 export const ageText = (a) => (a <= 0 ? 'hoje' : a === 1 ? 'há 1 dia' : `há ${a} dias`);

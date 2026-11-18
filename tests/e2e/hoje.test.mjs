@@ -35,13 +35,13 @@ test('assuntos do foco não mostram bolha de pessoa; o nome aparece como texto',
   await contexto.close();
 });
 
-test('as ações principais cabem em uma linha e "Virar tarefa" não existe mais (D-009)', async () => {
+test('as ações principais cabem na tela (2×2) e "Virar tarefa" não existe mais (D-009, E3.2)', async () => {
   const { contexto, pagina } = await novaPagina(amb, estadoBase(dois()));
   await pagina.setViewportSize({ width: 360, height: 740 });
   await pagina.goto(amb.url);
   const topos = await pagina.locator('.actions .act').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
-  assert.equal(topos.length, 3);
-  assert.equal(new Set(topos).size, 1, 'os três botões na mesma linha');
+  assert.equal(topos.length, 4);
+  assert.equal(new Set(topos).size, 2, 'quatro botões em duas linhas');
   const alt = await pagina.locator('.actions .act').first().evaluate((e) => e.getBoundingClientRect().height);
   assert.ok(alt >= 48);
   assert.equal(await pagina.locator('[data-how="tarefa"]').count(), 0);

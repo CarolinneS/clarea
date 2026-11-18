@@ -132,7 +132,7 @@ main > * { flex-shrink: 0; }
 .age.w { color: var(--age-w); } .age.a { color: var(--age-a); }
 .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); }
 
-input[type="text"], input[type="search"], input[type="time"], input:not([type]), select {
+input[type="text"], input[type="search"], input[type="time"], input[type="date"], input:not([type]), select {
   width: 100%; height: 56px; background: var(--surface); color: var(--text); border: 2px solid var(--line-strong);
   border-radius: 16px; padding: 0 16px; font-size: 17px; outline: none;
 }
@@ -214,7 +214,7 @@ textarea.grow:focus { border-color: var(--ring); }
 .focus-chev { flex-shrink: 0; align-self: center; color: var(--muted); }
 .focus-chev svg { transition: transform .15s; } .focus.open .focus-chev svg { transform: rotate(180deg); }
 .tip-line { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; font-size: 14px; color: var(--muted); }
-.actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; padding: 0 16px 8px; }
+.actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0 16px 8px; }
 .act { min-height: 48px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); font-size: 14px; line-height: 1.15; padding: 0 4px; white-space: nowrap; }
 .act.good { background: var(--good-soft); color: var(--good); border-color: transparent; font-weight: 700; }
 .act.soft { color: var(--muted); }
@@ -297,7 +297,7 @@ nav.tabs .fab[aria-current="page"] { color: var(--primary-ink); }
 <input type="file" id="file-in" accept=".json,application/json" hidden>
 
 <script type="module">
-import { TYPES, typeLabel, esc, norm, cap, plural, iso, addDays, diffDays, ageOf as ageOfEm, ageText, ageCls, horaLabel, dateShort as dateShortEm, initials, avaCls, fmt1 } from './src/util.js';
+import { TYPES, typeLabel, esc, norm, cap, plural, iso, addDays, diffDays, proximaSegunda, ageOf as ageOfEm, ageText, ageCls, horaLabel, dateShort as dateShortEm, initials, avaCls, fmt1 } from './src/util.js';
 import { suggest as suggestPuro } from './src/sugestao.js';
 import { buscar } from './src/busca.js';
 import { score as scorePuro, bySuggestion as bySuggestionPuro, focusList as focusListPuro, dayPct as dayPctPuro, doneToday as doneTodayPuro } from './src/foco.js';
@@ -308,7 +308,7 @@ import * as Arm from './src/armazenamento.js';
 import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation as observationPuro } from './src/textos.js';
 (function () {
   'use strict';
-  const VERSAO = '1.0.15';
+  const VERSAO = '1.0.16';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -904,6 +904,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   function actionsFor(i) {
     return `<div class="actions"><button class="act good" data-act="do" data-how="resolvido" data-id="${i.id}">Resolvido</button>
       <button class="act" data-act="do" data-how="amanha" data-id="${i.id}">Amanhã</button>
+      <button class="act" data-act="adiar-open" data-id="${i.id}">Outro dia</button>
       <button class="act soft" data-act="do" data-how="solto" data-id="${i.id}">Deixar pra lá</button></div>
       <div class="row" style="padding:0 16px 12px;gap:12px"><button class="link quiet" data-act="item-edit" data-id="${i.id}" style="min-height:36px;font-size:14px">Editar</button></div>`;
   }
@@ -951,7 +952,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       ${tour3}
       ${foco.length ? `<div class="row between"><span class="row" style="gap:8px"><h2 class="sec-title" style="margin:0">Foco de hoje</h2>${F.chosen ? '' : '<span class="small muted">sugerido</span>'}</span><button class="link" data-act="foco-open" style="min-height:36px">Mudar</button></div>
         <ul class="focus-list">${foco.map(itemCard).join('')}</ul>` : ''}
-      ${gd ? `<p class="small muted">${plural(gd, 'assunto guardado', 'assuntos guardados')} para amanhã.</p>` : ''}
+      ${gd ? `<button class="link" data-act="sheet" data-kind="guardados" style="align-self:flex-start">${plural(gd, 'assunto guardado', 'assuntos guardados')} para outro dia</button>` : ''}
       ${Object.keys(per).length ? `<span class="label">Por pessoa</span><div class="people">
         ${Object.keys(per).sort((a, b) => per[b] - per[a]).map((p) => `<button class="person" data-act="sheet" data-kind="pauta" data-person="${esc(p)}">${ava(p, true)}<span>${esc(p)} · ${per[p]}</span></button>`).join('')}
         ${semPessoa ? `<button class="person" data-act="sheet" data-kind="sempessoa"><span class="ava lg none" style="border-radius:50%">·</span><span>Só você · ${semPessoa}</span></button>` : ''}</div>` : ''}
@@ -1223,6 +1224,23 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
         <p class="small muted">Até 3 assuntos. <strong>${S.pick.length} de 3</strong> escolhidos.</p>
         ${pickerList()}
         <button class="btn btn-primary" data-act="foco-save">Salvar foco</button>`;
+    } else if (s.kind === 'adiar') {
+      const it = byId(s.id);
+      if (!it) return '';
+      const amanha = addDays(today(), 1);
+      body = `<header class="row between"><h1 style="font-size:22px">Guardar para quando?</h1>${close}</header>
+        <p class="small muted">${esc(it.text)}</p>
+        <div class="stack-s">
+          <button class="btn" data-act="adiar-ok" data-dias="3">Em 3 dias · ${dateShort(addDays(today(), 3))}</button>
+          <button class="btn" data-act="adiar-ok" data-dias="${diffDays(today(), proximaSegunda(today()))}">Próxima segunda · ${dateShort(proximaSegunda(today()))}</button>
+        </div>
+        <form class="stack-s" id="adiar-form"><label class="label" for="adiar-data">Escolher uma data</label>
+          <input id="adiar-data" type="date" min="${amanha}" value="${amanha}" required>
+          <button class="btn btn-primary" type="submit">Guardar até essa data</button></form>`;
+    } else if (s.kind === 'guardados') {
+      const list = guardados().sort((a, b) => (a.snoozeUntil < b.snoozeUntil ? -1 : a.snoozeUntil > b.snoozeUntil ? 1 : 0));
+      body = `<header class="row between"><h1 style="font-size:22px">Guardados para outro dia</h1>${close}</header>
+        ${list.length ? `<ul class="focus-list">${list.map((i) => `<li class="card stack-s"><p>${esc(i.text)}</p><div class="row between"><span class="small muted">Volta em ${dateShort(i.snoozeUntil)}</span><button class="btn-s" data-act="trazer" data-id="${i.id}">Trazer de volta</button></div></li>`).join('')}</ul>` : '<p class="muted">Nada guardado agora.</p>'}`;
     } else if (s.kind === 'editar') {
       const e = S.editSel, it = byId(s.id);
       if (!it) return '';
@@ -1318,6 +1336,16 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     S.undo = { inv: commit(m) };
     toast({ resolvido: 'Resolvido. Um a menos na cabeça.', amanha: 'Guardado para amanhã. Os dias continuam contando.', solto: 'Deixado pra lá. Fica no histórico.' }[how], true);
     S.expanded = null;
+    render();
+  }
+  /* Guardar para outro dia (E3.2, HJ-06): até 2 anos à frente; o assunto volta sozinho na data. */
+  function guardarAte(id, dias) {
+    if (!byId(id)) return;
+    if (!(dias >= 1)) { toast('Escolha uma data a partir de amanhã.'); return; }
+    if (dias > 730) { toast('Escolha uma data de até 2 anos à frente.'); return; }
+    S.undo = { inv: commit(Casos.adiar(E, id, ctx(), dias)) };
+    toast(`Guardado até ${dateShort(addDays(today(), dias))}. Ele volta nessa data.`, true);
+    S.expanded = null; S.sheet = null;
     render();
   }
 
@@ -1419,6 +1447,9 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
         S.sheet = null; render(); toast('Assunto atualizado.');
         break;
       }
+      case 'adiar-open': S.sheet = { kind: 'adiar', id: el.dataset.id }; render(); break;
+      case 'adiar-ok': guardarAte(S.sheet && S.sheet.id, Number(el.dataset.dias)); break;
+      case 'trazer': { const id = el.dataset.id; if (!byId(id)) return; S.undo = { inv: commit(Casos.trazerDeVolta(E, id, ctx())) }; toast('Voltou para o seu Hoje.', true); render(); break; }
       case 'sheet': S.sheet = { kind: el.dataset.kind, person: el.dataset.person }; render(); break;
       case 'sheet-close': case 'sheet-close-bg': S.sheet = null; render(); break;
       case 'copy': {
@@ -1480,6 +1511,9 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       const inp = document.getElementById('new-line');
       if (avisarLimite(inp)) return; // grande demais: mantém o texto e avisa
       if (addItem(inp.value)) { inp.value = ''; guardarRascunho(''); render('new-line'); }
+    } else if (f.id === 'adiar-form') {
+      const v = document.getElementById('adiar-data').value;
+      guardarAte(S.sheet && S.sheet.id, /^\d{4}-\d{2}-\d{2}$/.test(v) ? diffDays(today(), v) : 0);
     } else if (f.id === 'edit-form') {
       const campo = document.getElementById('edit-input'), v = campo.value.trim();
       if (avisarLimite(campo)) return;

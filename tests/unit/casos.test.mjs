@@ -271,3 +271,20 @@ test('resumos copiados: quebras de linha da anotação viram espaço, uma linha 
   assert.match(t, /Primeira linha segunda linha/);
   assert.equal(t.split('\n').filter((l) => l.startsWith('•')).length, 1);
 });
+
+test('trazerDeVolta: Agendado volta a Em andamento sem data; Aguardando continua Aguardando sem data; sem data, nada muda', () => {
+  const est = base();
+  const emAnd = est.assuntos.find((a) => a.status === 'in_progress');
+  const ag = ap(est, C.adiar(est, emAnd.id, ctx(), 5));
+  const volta = C.trazerDeVolta(ag, emAnd.id, ctx()).assuntos[0];
+  assert.deepEqual([volta.status, volta.resume_at], ['in_progress', null]);
+  const espera = est.assuntos.find((a) => a.status === 'waiting');
+  const ag2 = ap(est, C.adiar(est, espera.id, ctx(), 3));
+  const v2 = C.trazerDeVolta(ag2, espera.id, ctx()).assuntos[0];
+  assert.deepEqual([v2.status, v2.resume_at], ['waiting', null]);
+  assert.ok(C.semMudanca(C.trazerDeVolta(est, emAnd.id, ctx())), 'sem data de retomada não há o que trazer');
+  // desfazer devolve a data
+  const m = C.trazerDeVolta(ag, emAnd.id, ctx());
+  const inv = C.inverter(ag, m);
+  assert.equal(ap(ap(ag, m), inv).assuntos.find((a) => a.id === emAnd.id).resume_at, '2026-11-19');
+});

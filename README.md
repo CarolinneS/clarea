@@ -1,4 +1,4 @@
-# Clarea · versão 1.0.15
+# Clarea · versão 1.0.16
 
 > Escreva como pensa. O Clarea organiza no fim do dia.
 
@@ -52,8 +52,14 @@ feat: MVP do Clarea como app instalável (Anotar, Clarear o dia, Hoje)
 ## Como publicar uma atualização
 
 1. Altere os arquivos.
-2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.15`). Um teste automático avisa se algum ficar diferente.
+2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.16`). Um teste automático avisa se algum ficar diferente.
 3. Envie para o GitHub. Quem já tem o app instalado recebe a versão nova ao abrir o app (às vezes é preciso fechar e abrir de novo).
+
+## O que mudou na 1.0.16
+
+- **Outro dia:** em cada assunto, além de "Amanhã", agora há "Outro dia" com "Em 3 dias", "Próxima segunda" e "Escolher data". O assunto some do Hoje e volta na data escolhida.
+- **Guardados para outro dia:** no Hoje, a linha "N assuntos guardados para outro dia" abre uma lista simples com a data de volta e o botão "Trazer de volta".
+- As quatro ações do assunto agora ficam em duas linhas (2×2).
 
 ## O que mudou na 1.0.15
 

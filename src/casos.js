@@ -113,6 +113,14 @@ export function adiar(est, id, ctx, dias = 1) {
   return m;
 }
 
+/** Trazer de volta um assunto guardado antes da data: volta a aparecer hoje. Aguardando continua Aguardando, sem data. */
+export function trazerDeVolta(est, id, ctx) {
+  const a = achar(est, id), m = mudancaVazia();
+  if (!a.resume_at) return m;
+  m.assuntos.push(tocar(a, ctx, a.status === 'scheduled' ? { status: 'in_progress', resume_at: null } : { resume_at: null }));
+  return m;
+}
+
 /** Deixar pra lá: sai da frente e fica no histórico. */
 export function deixarPraLa(est, id, ctx) {
   const a = achar(est, id), m = mudancaVazia();
