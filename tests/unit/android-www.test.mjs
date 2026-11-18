@@ -23,3 +23,16 @@ test('capacitor.config.json usa o identificador provisório de teste e a pasta w
   assert.equal(cfg.appId, 'app.clarea.teste', 'o identificador definitivo da loja ainda não foi decidido (P-005)');
   assert.equal(cfg.webDir, 'www');
 });
+
+test('o APK de teste mostra o número do build no rodapé do Perfil', async () => {
+  const { mkdtempSync, readFileSync } = await import('node:fs');
+  const { tmpdir } = await import('node:os');
+  const { join } = await import('node:path');
+  const { prepararWww } = await import('../../scripts/preparar-www.mjs');
+  const saida = join(mkdtempSync(join(tmpdir(), 'www-')), 'www');
+  prepararWww(saida, '42');
+  assert.match(readFileSync(join(saida, 'index.html'), 'utf8'), /versão \$\{VERSAO\} · APK #42<\/p>/);
+  const sem = join(mkdtempSync(join(tmpdir(), 'www-')), 'www');
+  prepararWww(sem, '');
+  assert.doesNotMatch(readFileSync(join(sem, 'index.html'), 'utf8'), /APK #/);
+});

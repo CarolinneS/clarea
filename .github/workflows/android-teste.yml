@@ -38,6 +38,8 @@ jobs:
         run: npm install --no-audit --no-fund @capacitor/core@^8 @capacitor/cli@^8 @capacitor/android@^8 @capacitor/app@^8 @capacitor/filesystem@^8 @capacitor/share@^8
 
       - name: Copiar os arquivos do app para www/
+        env:
+          APK_BUILD: ${{ github.run_number }}
         run: node scripts/preparar-www.mjs
 
       - name: Criar o projeto Android (não fica no repositório)
