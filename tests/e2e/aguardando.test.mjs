@@ -38,7 +38,7 @@ test('aguardando fica numa seção recolhida, fora do foco e do progresso do dia
   await secao(pagina).click();
   const linha = pagina.locator('li.card', { hasText: 'Resposta do banco' });
   assert.match(await linha.textContent(), /Banco · .*(Atualizado hoje|Sem novidade há \d+ dias?) · sem data de retorno/);
-  assert.deepEqual(await linha.locator('button').allTextContents(), ['Chegou', 'Definir retorno', 'Voltar para o meu Hoje']);
+  assert.deepEqual(await linha.locator('button').allTextContents(), ['Resolvido', 'Recebi resposta', 'Definir retorno']);
   assert.equal(pagina.errosJs.length, 0);
   await contexto.close();
 });
@@ -84,11 +84,11 @@ test('chegou o dia de retorno: o assunto volta ao foco do Hoje com um aviso neut
   await contexto.close();
 });
 
-test('Voltar para o meu Hoje: vira assunto em andamento, entra no foco e dá para desfazer', async () => {
+test('Recebi resposta: vira assunto em andamento, entra no foco e dá para desfazer', async () => {
   const { contexto, pagina } = await novaPagina(amb, estado(espera({ snoozeUntil: addDays(hoje(), 5) })));
   await pagina.goto(amb.url);
   await secao(pagina).click();
-  await pagina.click('button:text-is("Voltar para o meu Hoje")');
+  await pagina.click('button:text-is("Recebi resposta")');
   await pagina.waitForSelector('text=Voltou para o seu Hoje.');
   let a = (await lerAssuntos(pagina))[0].v2;
   assert.deepEqual([a.status, a.resume_at], ['in_progress', null]);
@@ -101,11 +101,11 @@ test('Voltar para o meu Hoje: vira assunto em andamento, entra no foco e dá par
   await contexto.close();
 });
 
-test('Chegou: resolve o assunto e ele sai da seção', async () => {
+test('Resolvido na seção: resolve o assunto e ele sai da seção', async () => {
   const { contexto, pagina } = await novaPagina(amb, estado(espera()));
   await pagina.goto(amb.url);
   await secao(pagina).click();
-  await pagina.click('li.card button:text-is("Chegou")');
+  await pagina.click('li.card button:text-is("Resolvido")');
   await pagina.waitForSelector('text=Resolvido.');
   const a = (await lerAssuntos(pagina))[0].v2;
   assert.equal(a.status, 'done');
