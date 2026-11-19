@@ -152,10 +152,24 @@ test('cópia no formato 2 válida é restaurada', async () => {
   await contexto.close();
 });
 
+test('cópia no formato 2 traz o foco principal de volta; sem o campo (cópia antiga) vale como falso', async () => {
+  const nova = v2Base(); nova.assuntos[0].focus = true; nova.assuntos[0].focus_main = true;
+  const a = await importarV2(nova);
+  assert.deepEqual([(await lerAssuntos(a.pagina))[0].v2.focus, (await lerAssuntos(a.pagina))[0].v2.focus_main], [true, true]);
+  await a.contexto.close();
+  const antiga = v2Base(); antiga.assuntos[0].focus = true; delete antiga.assuntos[0].focus_main;
+  const b = await importarV2(antiga);
+  const x = (await lerAssuntos(b.pagina))[0].v2;
+  assert.deepEqual([x.focus, x.focus_main === true], [true, false]);
+  assert.deepEqual(b.pagina.errosJs, []);
+  await b.contexto.close();
+});
+
 const ADULTERADAS = {
   'estado inexistente': (c) => { c.assuntos[0].status = 'hackeado'; },
   'pessoa que não existe': (c) => { c.assuntos[0].person_id = 'fantasma'; },
   'id com código': (c) => { c.assuntos[0].id = 'a"><img src=x onerror="window.__m=1">'; },
+  'focus_main que não é verdadeiro ou falso': (c) => { c.assuntos[0].focus_main = 'sim'; },
   'datas inválidas': (c) => { c.assuntos[0].created_day = 'ontem'; },
   'assuntos que não é lista': (c) => { c.assuntos = { 0: 'x' }; }
 };

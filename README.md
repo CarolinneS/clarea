@@ -1,4 +1,4 @@
-# Clarea · versão 1.0.19
+# Clarea · versão 1.0.20
 
 > Escreva como pensa. O Clarea organiza no fim do dia.
 
@@ -52,8 +52,12 @@ feat: MVP do Clarea como app instalável (Anotar, Clarear o dia, Hoje)
 ## Como publicar uma atualização
 
 1. Altere os arquivos.
-2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.19`). Um teste automático avisa se algum ficar diferente.
+2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.20`). Um teste automático avisa se algum ficar diferente.
 3. Envie para o GitHub. Quem já tem o app instalado recebe a versão nova ao abrir o app (às vezes é preciso fechar e abrir de novo).
+
+## O que mudou na 1.0.20
+
+- **Base do foco principal (sem mudança visível ainda):** o modelo ganhou o campo `focus_main` (um assunto do foco pode ser o principal; só um por vez). É um acréscimo: dados e cópias anteriores continuam valendo, sem migração. Resolver, adiar ou deixar pra lá tira o assunto do foco e da condição de principal. A tela chega na próxima versão.
 
 ## O que mudou na 1.0.19
 
