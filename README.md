@@ -1,4 +1,4 @@
-# Clarea · versão 1.0.20
+# Clarea · versão 1.0.21
 
 > Escreva como pensa. O Clarea organiza no fim do dia.
 
@@ -52,8 +52,14 @@ feat: MVP do Clarea como app instalável (Anotar, Clarear o dia, Hoje)
 ## Como publicar uma atualização
 
 1. Altere os arquivos.
-2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.20`). Um teste automático avisa se algum ficar diferente.
+2. Aumente a versão nos **três** lugares, sempre com o mesmo número: `VERSAO` no `index.html`, `version` no `package.json` e `VERSAO` no `sw.js` (como `clarea-1.0.21`). Um teste automático avisa se algum ficar diferente.
 3. Envie para o GitHub. Quem já tem o app instalado recebe a versão nova ao abrir o app (às vezes é preciso fechar e abrir de novo).
+
+## O que mudou na 1.0.21
+
+- **Foco principal no Hoje:** o primeiro cartão aparece com o rótulo **"Foco principal"** (ou **"Comece por este"**, quando o foco ainda é só uma sugestão). Os outros 1 ou 2 ficam numa linha recolhida, **"Também hoje · N"**, que abre ao toque.
+- **Mudar:** cada assunto escolhido ganha **"Tornar principal"**. Sem escolher, o mais antigo assume ("automático"). Tocar de novo volta ao automático.
+- Ao resolver, adiar ou deixar pra lá o principal, o seguinte assume sozinho. O limite continua em 3 assuntos no foco.
 
 ## O que mudou na 1.0.20
 

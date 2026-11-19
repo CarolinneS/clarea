@@ -309,7 +309,7 @@ import * as Arm from './src/armazenamento.js';
 import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation as observationPuro } from './src/textos.js';
 (function () {
   'use strict';
-  const VERSAO = '1.0.20';
+  const VERSAO = '1.0.21';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -362,7 +362,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
     // só da sessão
     screen: 'boas-vindas', otherHora: false, tour: null, ver: null, demo: false, saved: null,
     clear: null, expanded: null, editing: null, showOld: false, sheet: null, q: '', histTab: 'lista', lim: {},
-    undo: null, confirmReset: false, ringFrom: 0, pick: [], pendingImport: null, editSel: null, personEdit: null, temaEdit: null
+    undo: null, confirmReset: false, ringFrom: 0, pick: [], pickMain: null, showTambem: false, pendingImport: null, editSel: null, personEdit: null, temaEdit: null
   });
   let S = fresh();
 
@@ -637,12 +637,13 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   const score = (i) => scorePuro(i, today());
   const bySuggestion = (list) => bySuggestionPuro(list, today());
   const focusList = () => focusListPuro(visiveis(), today());
-  function setFocus(ids) { commit(Casos.definirFoco(E, ids, ctx())); }
+  function setFocus(ids, principal = null) { commit(Casos.definirFoco(E, ids, ctx(), principal)); }
   function enterFoco() {
     const c = visiveis();
     if (!c.length) { S.screen = 'resumo'; return; }
     const chosen = c.filter((i) => i.focus).map((i) => i.id);
     S.pick = chosen.length ? chosen : bySuggestion(c).slice(0, 3).map((i) => i.id);
+    S.pickMain = (c.find((i) => i.focus && i.main) || {}).id || null;
     S.screen = 'foco';
   }
 
@@ -875,9 +876,17 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
         <div class="row between"><button class="link quiet" data-act="clear-undo" ${c.hist.length ? '' : 'disabled'}>Desfazer anterior</button><button class="link quiet" data-act="clear-skip">Pular este</button></div>
       </div>`;
   }
+  /* Principal efetivo entre os escolhidos: o marcado pela pessoa ou, se não houver, o de maior prioridade (automático). */
+  function pickPrincipal() {
+    if (S.pickMain && S.pick.includes(S.pickMain)) return { id: S.pickMain, auto: false };
+    const top = bySuggestion(visiveis().filter((i) => S.pick.includes(i.id)))[0];
+    return top ? { id: top.id, auto: true } : { id: null, auto: true };
+  }
   function pickerList() {
-    return `<div class="stack-s">${bySuggestion(visiveis()).map((i) => { const on = S.pick.includes(i.id); return `<button class="opt" data-act="pick-foco" data-id="${i.id}" aria-pressed="${on}"><span class="check">${on ? IC.tick : ''}</span>
-      <span class="stack-s" style="gap:4px;min-width:0;padding:10px 0"><span>${esc(i.text)}</span><span class="meta" style="font-weight:400">${tp(i.type)}${i.person ? `<span>${esc(i.person)}</span>` : ''}${ageTag(i)}</span></span></button>`; }).join('')}</div>`;
+    const pr = pickPrincipal();
+    return `<div class="stack-s">${bySuggestion(visiveis()).map((i) => { const on = S.pick.includes(i.id); const eh = on && pr.id === i.id; return `<div class="stack-s" style="gap:6px"><button class="opt" data-act="pick-foco" data-id="${i.id}" aria-pressed="${on}"><span class="check">${on ? IC.tick : ''}</span>
+      <span class="stack-s" style="gap:4px;min-width:0;padding:10px 0"><span>${esc(i.text)}</span><span class="meta" style="font-weight:400">${tp(i.type)}${i.person ? `<span>${esc(i.person)}</span>` : ''}${ageTag(i)}</span></span></button>
+      ${on ? `<button class="btn-s ${eh ? 'primary' : ''}" data-act="pick-main" data-id="${i.id}" aria-pressed="${eh}" style="align-self:flex-start">${eh ? (pr.auto ? 'Foco principal (automático)' : 'Foco principal') : 'Tornar principal'}</button>` : ''}</div>`; }).join('')}</div>`;
   }
   function scrFoco() {
     return `${demoBar()}<div class="stack-s"><span class="label">Último passo</span><h1>Escolha o foco de amanhã</h1>
@@ -966,7 +975,10 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       ${obs && !quiet ? `<div class="soft row" style="align-items:flex-start">${obs.person ? ava(obs.person) : logo(32, true)}<div class="stack-s"><p>${esc(obs.text)}</p>${obs.person ? `<button class="btn-s primary" data-act="sheet" data-kind="pauta" data-person="${esc(obs.person)}" style="align-self:flex-start">Pauta com ${esc(obs.person)}</button>` : ''}</div></div>` : ''}
       ${tour3}
       ${foco.length ? `<div class="row between"><span class="row" style="gap:8px"><h2 class="sec-title" style="margin:0">Foco de hoje</h2>${F.chosen ? '' : '<span class="small muted">sugerido</span>'}</span><button class="link" data-act="foco-open" style="min-height:36px">Mudar</button></div>
-        <ul class="focus-list">${foco.map(itemCard).join('')}</ul>` : ''}
+        <span class="label">${F.chosen ? 'Foco principal' : 'Comece por este'}</span>
+        <ul class="focus-list">${itemCard(foco[0])}</ul>
+        ${foco.length > 1 ? `<div class="stack-s"><button class="link" data-act="toggle-tambem" aria-expanded="${!!S.showTambem}" style="align-self:flex-start;min-height:36px">Também hoje · ${foco.length - 1} ${S.showTambem ? '▴' : '▾'}</button>
+          ${S.showTambem ? `<ul class="focus-list">${foco.slice(1).map(itemCard).join('')}</ul>` : ''}</div>` : ''}` : ''}
       ${gd ? `<button class="link" data-act="sheet" data-kind="guardados" style="align-self:flex-start">${plural(gd, 'assunto guardado', 'assuntos guardados')} para outro dia</button>` : ''}
       ${secaoEspera()}
       ${Object.keys(per).length ? `<span class="label">Por pessoa</span><div class="people">
@@ -1237,7 +1249,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
         ${list.length ? `<ul class="focus-list">${list.map(itemCard).join('')}</ul>` : '<p class="muted">Nada aqui agora.</p>'}`;
     } else if (s.kind === 'foco') {
       body = `<header class="row between"><h1 style="font-size:22px">Mudar o foco de hoje</h1>${close}</header>
-        <p class="small muted">Até 3 assuntos. <strong>${S.pick.length} de 3</strong> escolhidos.</p>
+        <p class="small muted">Até 3 assuntos. <strong>${S.pick.length} de 3</strong> escolhidos. Um deles pode ser o foco principal: é o que aparece primeiro no Hoje. Sem escolher, o mais antigo assume.</p>
         ${pickerList()}
         <button class="btn btn-primary" data-act="foco-save">Salvar foco</button>`;
     } else if (s.kind === 'adiar') {
@@ -1436,16 +1448,18 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
       }
       case 'pick-foco': {
         const id = el.dataset.id;
-        if (S.pick.includes(id)) S.pick = S.pick.filter((x) => x !== id);
+        if (S.pick.includes(id)) { S.pick = S.pick.filter((x) => x !== id); if (S.pickMain === id) S.pickMain = null; }
         else if (S.pick.length >= 3) { toast('Até 3 no foco. Desmarque um para escolher outro.'); return; }
         else S.pick = S.pick.concat(id);
         render();
         break;
       }
-      case 'foco-ok': setFocus(S.pick); S.screen = 'resumo'; render(); break;
+      case 'pick-main': { const id = el.dataset.id; if (!S.pick.includes(id)) return; S.pickMain = S.pickMain === id ? null : id; render(); break; }
+      case 'toggle-tambem': S.showTambem = !S.showTambem; render(); break;
+      case 'foco-ok': setFocus(S.pick, S.pickMain); S.screen = 'resumo'; render(); break;
       case 'foco-skip': setFocus([]); S.screen = 'resumo'; render(); break;
-      case 'foco-open': S.pick = focusList().list.map((i) => i.id); S.sheet = { kind: 'foco' }; render(); break;
-      case 'foco-save': setFocus(S.pick); S.sheet = null; S.expanded = null; render(); toast('Foco atualizado.'); break;
+      case 'foco-open': S.pick = focusList().list.map((i) => i.id); S.pickMain = (visiveis().find((i) => i.focus && i.main) || {}).id || null; S.sheet = { kind: 'foco' }; render(); break;
+      case 'foco-save': setFocus(S.pick, S.pickMain); S.sheet = null; S.expanded = null; render(); toast('Foco atualizado.'); break;
       case 'resumo-ok': if (S.ver) { S.ver = 4; verGo(); break; } if (S.tour === 2) S.tour = 3; go('hoje'); break;
       case 'expand': S.expanded = S.expanded === el.dataset.id ? '__none' : el.dataset.id; render(); break;
       case 'do': doAction(el.dataset.id, el.dataset.how); break;
