@@ -309,7 +309,7 @@ import * as Arm from './src/armazenamento.js';
 import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation as observationPuro } from './src/textos.js';
 (function () {
   'use strict';
-  const VERSAO = '1.0.19';
+  const VERSAO = '1.0.20';
 
   /* =========================================================
      1. Ícones e desenhos
@@ -388,7 +388,7 @@ import { pautaText as pautaTextPuro, semanaText as semanaTextPuro, observation a
   const diaLocal = (t) => { const d = new Date(t); return isNaN(d) ? '' : iso(d); };
   function visao() {
     const nomeP = new Map(E.pessoas.map((x) => [x.id, x.name])), nomeT = new Map(E.temas.map((x) => [x.id, x.name]));
-    S.items = E.assuntos.map((a) => ({ id: a.id, text: a.text, created: a.created_day, status: STATUS_TELA[a.status] || 'aberto', type: Casos.tipoDe(a), person: nomeP.get(a.person_id) || '', tema: nomeT.get(a.topic_id) || '', snoozeUntil: a.resume_at || '', atualizado: diaLocal(a.updated_at), doneDate: a.completed_day || '', focus: a.focus }));
+    S.items = E.assuntos.map((a) => ({ id: a.id, text: a.text, created: a.created_day, status: STATUS_TELA[a.status] || 'aberto', type: Casos.tipoDe(a), person: nomeP.get(a.person_id) || '', tema: nomeT.get(a.topic_id) || '', snoozeUntil: a.resume_at || '', atualizado: diaLocal(a.updated_at), doneDate: a.completed_day || '', focus: a.focus, main: a.focus_main === true }));
     S.people = E.pessoas.map((x) => x.name);
     S.temas = E.temas.map((x) => x.name);
     S.temasArq = E.temas.filter((x) => x.archived_at).map((x) => x.name);

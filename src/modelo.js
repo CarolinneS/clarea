@@ -31,7 +31,7 @@ export function novoAssunto(campos) {
     id: '', original_text: '', text: '', created_at: '', updated_at: '', created_day: '', completed_day: null,
     status: 'inbox', next_action: null, person_id: null, topic_id: null, due_at: null, reminder_at: null, resume_at: null,
     source: 'manual', ai_suggestion: null, ai_confidence: null, confirmed_at: null, completed_at: null, archived_at: null,
-    deleted_at: null, focus: false, ordem: 0, local_version: 1, server_version: null, legado: null, ...campos
+    deleted_at: null, focus: false, focus_main: false, ordem: 0, local_version: 1, server_version: null, legado: null, ...campos
   };
 }
 
@@ -78,6 +78,8 @@ export function validar(est) {
     if (a.status === 'done' && !a.completed_day) e(`${w}: concluído sem completed_day`);
     if (!Number.isInteger(a.ordem)) e(`${w}: ordem deve ser um número inteiro`);
     if (typeof a.focus !== 'boolean') e(`${w}: focus deve ser verdadeiro ou falso`);
+    // focus_main (E3.4) é aditivo: dados e cópias anteriores não têm o campo, e isso vale como falso.
+    if (a.focus_main !== undefined && typeof a.focus_main !== 'boolean') e(`${w}: focus_main deve ser verdadeiro ou falso`);
     if (!ORIGENS.includes(a.source)) e(`${w}: origem inválida (${a.source})`);
   });
   est.tarefas.forEach((t) => { if (!assuntos.has(t.assunto_id)) e(`tarefa ${t.id}: assunto inexistente`); });

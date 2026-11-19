@@ -100,7 +100,7 @@ export function unir(a, b) {
 /** Resolvido: conclui o assunto e tira do foco. */
 export function resolver(est, id, ctx) {
   const a = achar(est, id), m = mudancaVazia();
-  m.assuntos.push(tocar(a, ctx, { status: 'done', completed_at: ctx.agora, completed_day: ctx.hoje, resume_at: null, focus: false }));
+  m.assuntos.push(tocar(a, ctx, { status: 'done', completed_at: ctx.agora, completed_day: ctx.hoje, resume_at: null, focus: false, focus_main: false }));
   return m;
 }
 
@@ -109,7 +109,7 @@ export function adiar(est, id, ctx, dias = 1) {
   const a = achar(est, id), m = mudancaVazia();
   const data = addDays(ctx.hoje, dias);
   const campos = a.status === 'waiting' ? { resume_at: data } : { status: 'scheduled', resume_at: data };
-  m.assuntos.push(tocar(a, ctx, { ...campos, focus: false }));
+  m.assuntos.push(tocar(a, ctx, { ...campos, focus: false, focus_main: false }));
   return m;
 }
 
@@ -132,16 +132,18 @@ export function voltarParaMim(est, id, ctx) {
 /** Deixar pra lá: sai da frente e fica no histórico. */
 export function deixarPraLa(est, id, ctx) {
   const a = achar(est, id), m = mudancaVazia();
-  m.assuntos.push(tocar(a, ctx, { status: 'discarded', next_action: null, resume_at: null, focus: false }));
+  m.assuntos.push(tocar(a, ctx, { status: 'discarded', next_action: null, resume_at: null, focus: false, focus_main: false }));
   return m;
 }
 
-/** Escolher o foco do dia entre os assuntos em aberto. Só devolve o que mudou. */
-export function definirFoco(est, ids, ctx) {
+/** Escolher o foco do dia entre os assuntos em aberto (E3.4). `principalId` é o foco principal, um só, e precisa estar em `ids`;
+ *  sem ele, nenhum fica marcado e a tela mostra o de maior prioridade como principal. Só devolve o que mudou. */
+export function definirFoco(est, ids, ctx, principalId = null) {
   const m = mudancaVazia();
+  const principal = principalId && ids.includes(principalId) ? principalId : null;
   est.assuntos.filter((a) => ATIVOS.includes(a.status)).forEach((a) => {
-    const quer = ids.includes(a.id);
-    if (a.focus !== quer) m.assuntos.push(tocar(a, ctx, { focus: quer }));
+    const quer = ids.includes(a.id), main = a.id === principal;
+    if (a.focus !== quer || (a.focus_main === true) !== main) m.assuntos.push(tocar(a, ctx, { focus: quer, focus_main: main }));
   });
   return m;
 }

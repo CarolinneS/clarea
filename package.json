@@ -1,6 +1,6 @@
 {
   "name": "clarea",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "private": true,
   "description": "Clarea: transforme informações soltas em próximos passos claros.",
   "type": "module",
